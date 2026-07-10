@@ -45,7 +45,7 @@ FORECAST_BASE_URL = "https://www.jma.go.jp/bosai/forecast/data/forecast"
 # 気象庁サーバーへの配慮。連続リクエストの最小間隔（秒）と識別用 User-Agent。
 # 時間をかけてでもゆったりアクセスする方針。obsdl 等のバッチ取得でも同じ間隔を使う。
 REQUEST_INTERVAL_SEC = 3.0
-USER_AGENT = "queria-dataset-jma/0.1 (+https://github.com/flo8s/dataset-jma)"
+USER_AGENT = "queria-dataset-jma/0.1 (+https://github.com/queria-io/dataset-jma)"
 
 _last_request_at = 0.0
 
