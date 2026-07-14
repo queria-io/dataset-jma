@@ -11,6 +11,7 @@ import io
 import json
 import re
 import time
+from datetime import date
 import urllib.error
 import urllib.request
 import zipfile
@@ -42,9 +43,51 @@ HYPOCENTER_YEARS = [2019, 2020, 2021, 2022, 2023]
 # https://www.jma.go.jp/bosai/forecast/
 FORECAST_BASE_URL = "https://www.jma.go.jp/bosai/forecast/data/forecast"
 
+# 過去の気象データ検索の観測所選択ページと、気象官署の日別値ページ（daily_s1.php）。
+# 観測所選択ページ（prec_no ごと）で気象官署の一覧・位置を取得し、日別値ページを
+# prec_no × block_no × 年月で取得する。1 ページ＝1 観測所の 1 か月分（UTF-8 の HTML 表）。
+# https://www.data.jma.go.jp/stats/etrn/index.php
+ETRN_PREF_URL = "https://www.data.jma.go.jp/stats/etrn/select/prefecture.php"
+ETRN_DAILY_S1_URL = "https://www.data.jma.go.jp/stats/etrn/view/daily_s1.php"
+
+# 都府県・地方の区分コード（prec_no）。北海道などは複数に分かれるため 47 都道府県より多い。
+# 全国の観測所選択ページを列挙する起点。
+OBS_PREC_NOS = [
+    "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22",
+    "23", "24", "31", "32", "33", "34", "35", "36", "40", "41", "42", "43",
+    "44", "45", "46", "48", "49", "50", "51", "52", "53", "54", "55", "56",
+    "57", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "71",
+    "72", "73", "74", "81", "82", "83", "84", "85", "86", "87", "88", "91",
+    "99",
+]
+
+# 日別値を取り込む直近の月数（MVP の取得範囲）。取得ページ数＝気象官署数×月数のため、
+# ここで期間を絞る。過去月の確定値は変わらないので、必要に応じて拡張・増分化できる。
+OBS_MONTHS = 6
+
+# daily_s1.php（気象官署の日別値）テーブルの列位置 → (出力カラム名, 型)。
+# 平年値テーブル mart_jma_normals_daily と対になる中核要素に絞る。
+# 列: 0=日 1=現地気圧 2=海面気圧 3=降水量合計 4=最大1時間降水量 5=最大10分間降水量
+#     6=平均気温 7=最高気温 8=最低気温 9=平均湿度 10=最小湿度 11=平均風速 …
+#     16=日照時間 17=降雪合計 18=最深積雪 19=昼の天気概況 20=夜の天気概況
+OBS_COLUMNS = {
+    3: ("precipitation_mm", "float"),
+    6: ("temp_avg_c", "float"),
+    7: ("temp_max_c", "float"),
+    8: ("temp_min_c", "float"),
+    16: ("sunshine_hours", "float"),
+    17: ("snowfall_cm", "int"),
+    18: ("snow_depth_cm", "int"),
+}
+
 # 気象庁サーバーへの配慮。連続リクエストの最小間隔（秒）と識別用 User-Agent。
 # 時間をかけてでもゆったりアクセスする方針。obsdl 等のバッチ取得でも同じ間隔を使う。
 REQUEST_INTERVAL_SEC = 3.0
+
+# etrn の静的 HTML ページ（観測所選択・日別値）の取得間隔（秒）。bosai の JSON API より
+# 軽い静的ページだが、観測所×月で多数取得するため配慮して間隔を空ける。
+ETRN_INTERVAL_SEC = 1.0
+
 USER_AGENT = "queria-dataset-jma/0.1 (+https://github.com/queria-io/dataset-jma)"
 
 _last_request_at = 0.0
@@ -55,6 +98,8 @@ AREAS_PATH = FDL_DIR / "jma_areas.ndjson"
 NORMALS_DAILY_PATH = FDL_DIR / "jma_normals_daily.ndjson"
 HYPOCENTERS_PATH = FDL_DIR / "jma_hypocenters.ndjson"
 FORECASTS_PATH = FDL_DIR / "jma_forecasts.ndjson"
+OBS_STATIONS_PATH = FDL_DIR / "jma_observation_stations.ndjson"
+DAILY_OBS_PATH = FDL_DIR / "jma_daily_observations.ndjson"
 
 # 気象官署（管区・地方気象台や測候所相当）の観測所種別。
 # amedas のうち type A/B が気象官署に相当する。
@@ -105,6 +150,8 @@ def main() -> None:
     _build_normals_daily()
     _build_hypocenters()
     _build_forecasts()
+    stations = _build_observation_stations()
+    _build_daily_observations(stations)
 
     dbt = dbtRunner()
 
@@ -121,10 +168,10 @@ def main() -> None:
         raise SystemExit("dbt docs generate failed")
 
 
-def _throttle() -> None:
-    """直前のリクエストから最低 REQUEST_INTERVAL_SEC 空ける。"""
+def _throttle(interval: float = REQUEST_INTERVAL_SEC) -> None:
+    """直前のリクエストから最低 interval 秒空ける。"""
     global _last_request_at
-    wait = REQUEST_INTERVAL_SEC - (time.monotonic() - _last_request_at)
+    wait = interval - (time.monotonic() - _last_request_at)
     if wait > 0:
         time.sleep(wait)
     _last_request_at = time.monotonic()
@@ -144,6 +191,14 @@ def _fetch_bytes(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(req) as resp:
         return resp.read()
+
+
+def _fetch_text(url: str, interval: float = ETRN_INTERVAL_SEC) -> str:
+    """間隔を空けて UTF-8 の HTML/テキストを取得する（etrn の静的ページ用）。"""
+    _throttle(interval)
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req) as resp:
+        return resp.read().decode("utf-8", errors="replace")
 
 
 def _dms_to_deg(dms: list[float]) -> float:
@@ -460,6 +515,123 @@ def _build_forecasts() -> None:
             count += len(rows)
             offices += 1
     print(f"  jma_forecasts.ndjson: {count} rows / {offices} offices")
+
+
+_VIEWPOINT_RE = re.compile(
+    r"viewPoint\('([as])','(\d+)','([^']*)','([^']*)',"
+    r"'([^']*)','([^']*)','([^']*)','([^']*)'"
+)
+
+
+def _build_observation_stations() -> list[tuple[str, str]]:
+    """観測所選択ページを prec_no ごとに巡回し、気象官署（type s）の一覧を整形する。
+
+    各ページの area タグに埋め込まれた viewPoint(type, block_no, 地点名, カナ,
+    緯度度, 緯度分, 経度度, 経度分) から気象官署だけを取り出し、位置を十進度に直して
+    観測所レジストリ NDJSON に保存する。日別値を取得する (prec_no, block_no) の一覧を返す。
+    """
+    seen: set[str] = set()
+    stations: list[tuple[str, str]] = []
+    with OBS_STATIONS_PATH.open("w", encoding="utf-8") as f:
+        for prec_no in OBS_PREC_NOS:
+            url = (
+                f"{ETRN_PREF_URL}?prec_no={prec_no}"
+                "&block_no=&year=&month=&day=&view="
+            )
+            html = _fetch_text(url)
+            for m in _VIEWPOINT_RE.finditer(html):
+                kind, block_no, name, kana, latd, latm, lond, lonm = m.groups()
+                # 気象官署（block_no 5 桁）のみ。アメダス（type a）は対象外。
+                if kind != "s" or block_no in seen:
+                    continue
+                seen.add(block_no)
+                row = {
+                    "block_no": block_no,
+                    "prec_no": prec_no,
+                    "station_name": name,
+                    "station_kana": kana,
+                    "lat": round(int(latd) + float(latm) / 60, 6),
+                    "lon": round(int(lond) + float(lonm) / 60, 6),
+                }
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                stations.append((prec_no, block_no))
+    print(f"  jma_observation_stations.ndjson: {len(stations)} stations")
+    return stations
+
+
+def _recent_year_months(n: int) -> list[tuple[int, int]]:
+    """当月から遡って直近 n か月の (年, 月) を古い順に返す。"""
+    today = date.today()
+    year, month = today.year, today.month
+    result: list[tuple[int, int]] = []
+    for _ in range(n):
+        result.append((year, month))
+        month -= 1
+        if month == 0:
+            month = 12
+            year -= 1
+    return list(reversed(result))
+
+
+def _obs_value(cell: str, kind: str):
+    """日別値の値欄をパースする。先頭の符号付き数値のみ採用し、品質記号（")" 準正常値・
+    "]" 資料不足値 など）は落とす。"--"（現象なし）・"×"（欠測）・空欄は欠損（None）。"""
+    m = re.match(r"-?\d+(?:\.\d+)?", cell.replace("\xa0", " ").strip())
+    if m is None:
+        return None
+    return int(m.group()) if kind == "int" else float(m.group())
+
+
+def _parse_daily_s1(html: str) -> list[tuple[int, list[str]]]:
+    """daily_s1.php（気象官署の日別値）の HTML から (日, セル配列) の並びを取り出す。
+
+    データ行は class="mtx" で、先頭セルが日、以降に気圧・降水量・気温・…の順で並ぶ。
+    """
+    rows: list[tuple[int, list[str]]] = []
+    for tr in re.findall(r'<tr class="mtx"[^>]*>(.*?)</tr>', html, re.S):
+        tds = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)
+        if not tds:
+            continue
+        cells = [re.sub(r"<[^>]+>", "", c) for c in tds]
+        day = cells[0].strip()
+        # 天気概況まで揃った日別値行のみ（ヘッダや観測所情報行を除く）。
+        if not day.isdigit() or len(cells) <= max(OBS_COLUMNS):
+            continue
+        rows.append((int(day), cells))
+    return rows
+
+
+def _build_daily_observations(stations: list[tuple[str, str]]) -> None:
+    """気象官署ごとに直近 OBS_MONTHS か月分の日別値ページを取得し、観測所×日の NDJSON に整形する。
+
+    観測値・平年値と対で「実況 vs 平年」の比較ができるよう、平年値テーブルと同じ中核要素
+    （気温・降水量・日照時間・積雪など）に絞る。全要素が欠損の日（未観測の将来日など）は除く。
+    """
+    months = _recent_year_months(OBS_MONTHS)
+    count = 0
+    with DAILY_OBS_PATH.open("w", encoding="utf-8") as out:
+        for prec_no, block_no in stations:
+            for year, month in months:
+                url = (
+                    f"{ETRN_DAILY_S1_URL}?prec_no={prec_no}&block_no={block_no}"
+                    f"&year={year}&month={month}&day=&view="
+                )
+                html = _fetch_text(url)
+                for day, cells in _parse_daily_s1(html):
+                    values = {
+                        column: _obs_value(cells[i], kind)
+                        for i, (column, kind) in OBS_COLUMNS.items()
+                    }
+                    if all(v is None for v in values.values()):
+                        continue
+                    row = {
+                        "block_no": block_no,
+                        "observed_date": f"{year:04d}-{month:02d}-{day:02d}",
+                        **values,
+                    }
+                    out.write(json.dumps(row, ensure_ascii=False) + "\n")
+                    count += 1
+    print(f"  jma_daily_observations.ndjson: {count} rows / {len(stations)} stations")
 
 
 if __name__ == "__main__":
