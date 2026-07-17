@@ -118,3 +118,41 @@ models:
         description: 風の予報文
       - name: wave
         description: 波の予報文（内陸はNULL）
+
+  - name: raw_jma_observation_stations
+    description: 気象官署の観測所レジストリ（過去の気象データ検索の観測所選択ページ）の生データ
+    columns:
+      - name: block_no
+        description: 観測所番号（気象官署、5桁のブロック番号）
+      - name: prec_no
+        description: 都府県・地方の区分コード
+      - name: station_name
+        description: 観測所名（漢字）
+      - name: station_kana
+        description: 観測所名（カナ）
+      - name: lat
+        description: 緯度（十進度）
+      - name: lon
+        description: 経度（十進度）
+
+  - name: raw_jma_daily_observations
+    description: 気象官署の日別観測値（過去の気象データ検索の日別値ページ daily_s1.php）の生データ
+    columns:
+      - name: block_no
+        description: 観測所番号（気象官署、5桁のブロック番号）
+      - name: observed_date
+        description: 観測日
+      - name: precipitation_mm
+        description: 日降水量の合計（mm）
+      - name: temp_avg_c
+        description: 日平均気温（℃）
+      - name: temp_max_c
+        description: 日最高気温（℃）
+      - name: temp_min_c
+        description: 日最低気温（℃）
+      - name: sunshine_hours
+        description: 日照時間（時間）
+      - name: snowfall_cm
+        description: 降雪の合計（cm）
+      - name: snow_depth_cm
+        description: 最深積雪（cm）
