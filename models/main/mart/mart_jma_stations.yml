@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: mart_jma_stations
-    description: 気象庁アメダス観測所の一覧（位置・標高・観測所種別）
+    description: 気象庁のアメダス観測所一覧マスタ。各観測所のID、名称（日本語・カナ・英語）、緯度経度、標高、観測所種別、気象官署かどうか、観測要素を収録する。
     access: public
     config:
       contract:
