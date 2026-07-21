@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: mart_jma_hypocenters
-    description: 気象庁 地震月報（カタログ編）の震源データ（発生日時・震央位置・深さ・マグニチュード）
+    description: 気象庁 地震月報（カタログ編）に基づく地震の震源データ。各地震の発生日時、震央の緯度経度、深さ、マグニチュード（種別付き）、震央地名、最大震度、観測点数などを収録する。
     access: public
     config:
       contract:

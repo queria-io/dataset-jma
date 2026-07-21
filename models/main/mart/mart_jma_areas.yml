@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: mart_jma_areas
-    description: 気象庁の地域コード（予報区の階層）
+    description: 気象庁の予報区を表す地域コードの階層マスタ。地方・府県予報区・市町村等をまたぐ区分を、コード・階層レベル・名称（日本語・英語・カナ）・所管気象台・親コードで収録する。
     access: public
     config:
       contract:
