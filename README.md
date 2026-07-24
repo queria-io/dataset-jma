@@ -1,8 +1,8 @@
 ## データ出典
 
-[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）と、気象官署の日別観測値（実況値）を収録しています。
+[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）と、気象官署の日別観測値・時別観測値（実況値）を収録しています。
 
-観測所一覧・地域コード・天気予報は非公式の JSON 配信（気象庁サイトが内部利用しているエンドポイント）を、日別平年値は平年値ダウンロードの配布ファイルを、気象官署の観測所一覧・日別観測値は過去の気象データ検索のページを出典として利用しています。
+観測所一覧・地域コード・天気予報は非公式の JSON 配信（気象庁サイトが内部利用しているエンドポイント）を、日別平年値は平年値ダウンロードの配布ファイルを、気象官署の観測所一覧・日別観測値・時別観測値は過去の気象データ検索のページを出典として利用しています。
 
 - 観測所一覧: https://www.jma.go.jp/bosai/amedas/const/amedastable.json
 - 地域コード: https://www.jma.go.jp/bosai/common/const/area.json
@@ -70,6 +70,23 @@
 - snowfall_cm: 降雪の合計（INTEGER、cm。現象のない日・観測なしは NULL）
 - snow_depth_cm: 最深積雪（INTEGER、cm。現象のない日・観測なしは NULL）
 
+## テーブル: mart_jma_hourly_observations
+
+気象官署の時別観測値（実況値）です。観測所×日×時（毎正時）ごとに、気温・降水量・湿度・風速・風向・日照時間・現地/海面気圧・最深積雪を持ちます。時は日本標準時で 1〜24（24 は 24 時＝翌日 0 時）です。block_no で mart_jma_observation_stations と結合できます。日別観測値（mart_jma_daily_observations）を時間帯まで細かくしたもので、需要予測・電力・小売などの時間帯分析に使えます。取得負荷を抑えるため各都道府県の地方・管区気象台がある主要地点（47 地点）に絞り、直近数日分を収録しています（過去日の確定値は変わりません）。観測していない要素や現象のない時（積雪など）、欠測は NULL です。
+
+- block_no: 観測所番号（VARCHAR、気象官署のブロック番号5桁）
+- observed_date: 観測日（DATE、日本標準時）
+- hour: 時（INTEGER、毎正時・日本標準時の 1〜24。24 は 24 時＝翌日 0 時）
+- temp_c: 気温（DOUBLE、℃）
+- precipitation_mm: 1時間降水量（DOUBLE、mm。現象のない時・欠測は NULL）
+- humidity_pct: 相対湿度（INTEGER、％）
+- wind_speed_ms: 風速（DOUBLE、m/s）
+- wind_direction: 風向（VARCHAR、16方位。無風時は「静穏」、欠測は NULL）
+- sunshine_hours: 1時間あたりの日照時間（DOUBLE、時間）
+- pressure_local_hpa: 現地気圧（DOUBLE、hPa）
+- pressure_sea_hpa: 海面気圧（DOUBLE、hPa）
+- snow_depth_cm: 積雪の深さ（INTEGER、cm。現象のない時・観測なしは NULL）
+
 ## テーブル: mart_jma_hypocenters
 
 地震月報（カタログ編）の震源データです。1 件 1 地震で、発生日時・震央位置・深さ・マグニチュードを持ちます。直近 5 年（2019〜2023 年）を収録しています（カタログは確定までに数年のラグがあります）。
@@ -106,7 +123,7 @@
 
 ### データ更新手順
 
-main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）と、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・日別観測値の観測所×日への整形を行って `.fdl/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh local` で実行する。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で調整する。
+main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）と、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）・時別値ページ（hourly_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・日別観測値の観測所×日への整形・時別観測値の観測所×日時への整形を行って `.fdl/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh local` で実行する。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で、時別観測値の収録日数は `OBS_HOURLY_DAYS`・対象地点は `MAJOR_STATION_NAMES` で調整する。
 
 ## ライセンス
 

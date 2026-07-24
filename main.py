@@ -11,7 +11,7 @@ import io
 import json
 import re
 import time
-from datetime import date
+from datetime import date, timedelta
 import urllib.error
 import urllib.request
 import zipfile
@@ -50,6 +50,11 @@ FORECAST_BASE_URL = "https://www.jma.go.jp/bosai/forecast/data/forecast"
 ETRN_PREF_URL = "https://www.data.jma.go.jp/stats/etrn/select/prefecture.php"
 ETRN_DAILY_S1_URL = "https://www.data.jma.go.jp/stats/etrn/view/daily_s1.php"
 
+# 気象官署の時別値ページ（hourly_s1.php）。1 ページ＝1 観測所の 1 日分（毎正時の UTF-8 HTML 表）。
+# 主要観測所 × prec_no × block_no × 年月日で取得する。
+# https://www.data.jma.go.jp/stats/etrn/index.php
+ETRN_HOURLY_S1_URL = "https://www.data.jma.go.jp/stats/etrn/view/hourly_s1.php"
+
 # 都府県・地方の区分コード（prec_no）。北海道などは複数に分かれるため 47 都道府県より多い。
 # 全国の観測所選択ページを列挙する起点。
 OBS_PREC_NOS = [
@@ -80,6 +85,38 @@ OBS_COLUMNS = {
     18: ("snow_depth_cm", "int"),
 }
 
+# 時別値を取り込む直近の日数（MVP の取得範囲）。時別値は 1 ページ＝1 観測所の 1 日分で、
+# 日数×観測所ぶんのページを取得する。日別値（1 ページ＝1 か月）より嵩むため、対象を
+# 主要地点かつ短期間に絞る。過去日の確定値は変わらないので、必要に応じて拡張・増分化できる。
+OBS_HOURLY_DAYS = 14
+
+# 時別値を取り込む主要観測所（各都道府県の地方・管区気象台がある地点名）。全気象官署だと
+# 日数×官署でページ数が過大になるため代表 47 地点に絞る。観測所レジストリ
+# （raw_jma_observation_stations）から地点名がこの集合に一致するものを選ぶ。
+MAJOR_STATION_NAMES = {
+    "札幌", "青森", "盛岡", "仙台", "秋田", "山形", "福島", "水戸", "宇都宮",
+    "前橋", "熊谷", "千葉", "東京", "横浜", "新潟", "富山", "金沢", "福井",
+    "甲府", "長野", "岐阜", "静岡", "名古屋", "津", "彦根", "京都", "大阪",
+    "神戸", "奈良", "和歌山", "鳥取", "松江", "岡山", "広島", "下関", "徳島",
+    "高松", "松山", "高知", "福岡", "佐賀", "長崎", "熊本", "大分", "宮崎",
+    "鹿児島", "那覇",
+}
+
+# hourly_s1.php（気象官署の時別値）テーブルの列位置 → (出力カラム名, 型)。
+# 列: 0=時 1=現地気圧 2=海面気圧 3=降水量 4=気温 5=露点温度 6=蒸気圧 7=湿度
+#     8=風速 9=風向 10=日照時間 11=全天日射量 12=降雪 13=積雪 14=天気 15=雲量 16=視程
+HOURLY_OBS_COLUMNS = {
+    1: ("pressure_local_hpa", "float"),
+    2: ("pressure_sea_hpa", "float"),
+    3: ("precipitation_mm", "float"),
+    4: ("temp_c", "float"),
+    7: ("humidity_pct", "int"),
+    8: ("wind_speed_ms", "float"),
+    9: ("wind_direction", "str"),
+    10: ("sunshine_hours", "float"),
+    13: ("snow_depth_cm", "int"),
+}
+
 # 気象庁サーバーへの配慮。連続リクエストの最小間隔（秒）と識別用 User-Agent。
 # 時間をかけてでもゆったりアクセスする方針。obsdl 等のバッチ取得でも同じ間隔を使う。
 REQUEST_INTERVAL_SEC = 3.0
@@ -100,6 +137,7 @@ HYPOCENTERS_PATH = FDL_DIR / "jma_hypocenters.ndjson"
 FORECASTS_PATH = FDL_DIR / "jma_forecasts.ndjson"
 OBS_STATIONS_PATH = FDL_DIR / "jma_observation_stations.ndjson"
 DAILY_OBS_PATH = FDL_DIR / "jma_daily_observations.ndjson"
+HOURLY_OBS_PATH = FDL_DIR / "jma_hourly_observations.ndjson"
 
 # 気象官署（管区・地方気象台や測候所相当）の観測所種別。
 # amedas のうち type A/B が気象官署に相当する。
@@ -152,6 +190,7 @@ def main() -> None:
     _build_forecasts()
     stations = _build_observation_stations()
     _build_daily_observations(stations)
+    _build_hourly_observations()
 
     dbt = dbtRunner()
 
@@ -632,6 +671,91 @@ def _build_daily_observations(stations: list[tuple[str, str]]) -> None:
                     out.write(json.dumps(row, ensure_ascii=False) + "\n")
                     count += 1
     print(f"  jma_daily_observations.ndjson: {count} rows / {len(stations)} stations")
+
+
+def _obs_direction(cell: str):
+    """時別値の風向欄をテキストで返す。方位（例: 西・北北東）と「静穏」を採用し、
+    「×」（欠測）・「--」・空欄は欠損（None）。"""
+    text = cell.replace("\xa0", " ").strip()
+    return None if text in ("", "--", "×") else text
+
+
+def _recent_dates(n: int) -> list[tuple[int, int, int]]:
+    """前日から遡って直近 n 日の (年, 月, 日) を古い順に返す。当日は観測途中のため含めない。"""
+    end = date.today() - timedelta(days=1)
+    result = [
+        ((end - timedelta(days=i)).year, (end - timedelta(days=i)).month, (end - timedelta(days=i)).day)
+        for i in range(n)
+    ]
+    return list(reversed(result))
+
+
+def _parse_hourly_s1(html: str) -> list[tuple[int, list[str]]]:
+    """hourly_s1.php（気象官署の時別値）の HTML から (時, セル配列) の並びを取り出す。
+
+    データ行は class="mtx" で、先頭セルが時（1〜24）、以降に気圧・降水量・気温・…が並ぶ。
+    """
+    rows: list[tuple[int, list[str]]] = []
+    for tr in re.findall(r'<tr class="mtx"[^>]*>(.*?)</tr>', html, re.S):
+        tds = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)
+        if not tds:
+            continue
+        cells = [re.sub(r"<[^>]+>", "", c) for c in tds]
+        hour = cells[0].strip()
+        # 時別値行のみ（時が 1〜24 の数字で、対象列まで揃っているもの）。
+        if not hour.isdigit() or len(cells) <= max(HOURLY_OBS_COLUMNS):
+            continue
+        rows.append((int(hour), cells))
+    return rows
+
+
+def _major_stations() -> list[tuple[str, str, str]]:
+    """観測所レジストリ（daily 取得で保存済み）から主要地点だけを (prec_no, block_no, 地点名) で返す。"""
+    stations: list[tuple[str, str, str]] = []
+    with OBS_STATIONS_PATH.open(encoding="utf-8") as f:
+        for line in f:
+            row = json.loads(line)
+            if row["station_name"] in MAJOR_STATION_NAMES:
+                stations.append((row["prec_no"], row["block_no"], row["station_name"]))
+    return stations
+
+
+def _build_hourly_observations() -> None:
+    """主要な気象官署ごとに直近 OBS_HOURLY_DAYS 日分の時別値ページを取得し、観測所×日時の NDJSON に整形する。
+
+    時別値は毎正時（日本標準時。時＝1〜24 で、24 は 24 時＝翌日 0 時）の実況値。日別観測値
+    （mart_jma_daily_observations）を時間帯まで細かくしたもので、需要予測・電力・小売の
+    時間帯分析に使う。全要素が欠測の時（未来の時刻など）は除く。
+    """
+    stations = _major_stations()
+    dates = _recent_dates(OBS_HOURLY_DAYS)
+    count = 0
+    with HOURLY_OBS_PATH.open("w", encoding="utf-8") as out:
+        for prec_no, block_no, _name in stations:
+            for year, month, day in dates:
+                url = (
+                    f"{ETRN_HOURLY_S1_URL}?prec_no={prec_no}&block_no={block_no}"
+                    f"&year={year}&month={month}&day={day}&view="
+                )
+                html = _fetch_text(url)
+                for hour, cells in _parse_hourly_s1(html):
+                    values = {}
+                    for i, (column, kind) in HOURLY_OBS_COLUMNS.items():
+                        if kind == "str":
+                            values[column] = _obs_direction(cells[i])
+                        else:
+                            values[column] = _obs_value(cells[i], kind)
+                    if all(v is None for v in values.values()):
+                        continue
+                    row = {
+                        "block_no": block_no,
+                        "observed_date": f"{year:04d}-{month:02d}-{day:02d}",
+                        "hour": hour,
+                        **values,
+                    }
+                    out.write(json.dumps(row, ensure_ascii=False) + "\n")
+                    count += 1
+    print(f"  jma_hourly_observations.ndjson: {count} rows / {len(stations)} stations")
 
 
 if __name__ == "__main__":
