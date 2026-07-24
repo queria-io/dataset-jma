@@ -156,3 +156,31 @@ models:
         description: 降雪の合計（cm）
       - name: snow_depth_cm
         description: 最深積雪（cm）
+
+  - name: raw_jma_hourly_observations
+    description: 気象官署の時別観測値（過去の気象データ検索の時別値ページ hourly_s1.php）の生データ
+    columns:
+      - name: block_no
+        description: 観測所番号（気象官署、5桁のブロック番号）
+      - name: observed_date
+        description: 観測日
+      - name: hour
+        description: 時（毎正時、日本標準時、1〜24。24は24時＝翌日0時）
+      - name: pressure_local_hpa
+        description: 現地気圧（hPa）
+      - name: pressure_sea_hpa
+        description: 海面気圧（hPa）
+      - name: precipitation_mm
+        description: 1時間降水量（mm）
+      - name: temp_c
+        description: 気温（℃）
+      - name: humidity_pct
+        description: 相対湿度（％）
+      - name: wind_speed_ms
+        description: 風速（m/s）
+      - name: wind_direction
+        description: 風向（16方位、無風時は静穏）
+      - name: sunshine_hours
+        description: 1時間あたりの日照時間（時間）
+      - name: snow_depth_cm
+        description: 積雪の深さ（cm）
