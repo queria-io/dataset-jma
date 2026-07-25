@@ -1,0 +1,31 @@
+schema: main
+name: mart_jma_areas
+title: 気象庁 地域コード
+description: 気象庁の予報区を表す地域コードの階層マスタ。地方・府県予報区・市町村等をまたぐ区分を、コード・階層レベル・名称（日本語・英語・カナ）・所管気象台・親コードで収録する。
+keywords:
+  - 気象
+  - 地域コード
+  - 予報区
+  - 気象庁
+published: true
+sources:
+  - path: https://www.jma.go.jp/bosai/common/const/area.json
+fields:
+  - name: area_code
+    title: 地域コード
+  - name: level
+    title: 階層
+    description: center / office / class10 / class15 / class20
+  - name: name
+    title: 地域名
+  - name: name_en
+    title: 地域名（英語）
+  - name: name_kana
+    title: 地域名（カナ）
+    description: class20（市区町村）のみ
+  - name: office_name
+    title: 担当気象台名
+    description: center / office のみ
+  - name: parent_code
+    title: 親地域コード
+    description: 上位階層のコード（centerはNULL）

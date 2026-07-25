@@ -1,0 +1,56 @@
+schema: main
+name: mart_jma_hourly_observations
+title: 気象庁 時別観測値（気象官署）
+description: 気象官署の時別観測値（実況値）。観測所×日×時（毎正時）ごとに気温、降水量、湿度、 風速・風向、日照時間、現地・海面気圧、最深積雪を収録する。時は日本標準時で1〜24 （24は24時＝翌日0時）。block_noでmart_jma_observation_stationsと結合できる。日別観測値
+  （mart_jma_daily_observations）を時間帯まで細かくしたもので、需要予測・電力・小売などの 時間帯分析に使える。取得負荷を抑えるため各都道府県の地方・管区気象台がある主要地点に絞り、
+  直近数日分を収録する（過去日の確定値は変わらない）。観測していない要素や現象のない時 （積雪など）、欠測はNULL。
+keywords:
+  - 気象
+  - 観測値
+  - 時別
+  - 気温
+  - 降水量
+  - 風
+  - 気圧
+  - 気象官署
+  - 気象庁
+published: true
+sources:
+  - path: https://www.data.jma.go.jp/stats/etrn/index.php
+fields:
+  - name: block_no
+    title: 観測所番号
+    description: 気象官署のブロック番号（5桁）。mart_jma_observation_stationsと結合できる
+  - name: observed_date
+    title: 観測日
+    description: 観測日（日本標準時）
+  - name: hour
+    title: 時
+    description: 毎正時の時刻（日本標準時、1〜24）。24は24時（翌日0時）を表す
+  - name: temp_c
+    title: 気温
+    description: 摂氏（℃）
+  - name: precipitation_mm
+    title: 降水量
+    description: 1時間の降水量（mm）。現象のない時・欠測はNULL
+  - name: humidity_pct
+    title: 湿度
+    description: 相対湿度（％）
+  - name: wind_speed_ms
+    title: 風速
+    description: 毎正時の風速（m/s）
+  - name: wind_direction
+    title: 風向
+    description: '16方位（例: 西・北北東）。無風時は「静穏」。欠測はNULL'
+  - name: sunshine_hours
+    title: 日照時間
+    description: 1時間あたりの日照時間（時間）
+  - name: pressure_local_hpa
+    title: 現地気圧
+    description: ヘクトパスカル（hPa）
+  - name: pressure_sea_hpa
+    title: 海面気圧
+    description: ヘクトパスカル（hPa）
+  - name: snow_depth_cm
+    title: 積雪の深さ
+    description: センチメートル（cm）。現象のない時・観測なしはNULL

@@ -1,0 +1,63 @@
+spec_version: "0.1"
+name: jma
+title: 気象庁 気象データ
+description: 気象庁の観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ（発生日時・震央位置・深さ・マグニチュード）と、アメダス観測所の日別平年値（気温・降水量など、1991〜2020年）
+keywords:
+  - 気象
+  - 気温
+  - 降水量
+  - 観測所
+  - アメダス
+  - 天気予報
+  - 地震
+  - 震源
+  - マグニチュード
+  - 平年値
+homepage: https://github.com/queria-io/dataset-jma
+language: ja
+
+licenses:
+  - JP-PDL-1.0
+
+sources:
+  - title: 気象庁
+    path: https://www.jma.go.jp/
+  - title: 過去の気象データ検索
+    path: https://www.data.jma.go.jp/stats/etrn/index.php
+  - title: 地震月報（カタログ編）
+    path: https://www.data.jma.go.jp/eqev/data/bulletin/hypo.html
+
+contributors:
+  - title: 気象庁
+    path: https://www.jma.go.jp/
+    roles: [rightsHolder]
+
+temporal_coverage: { start: "1991", end: null }
+spatial_coverage: [JP]
+update_frequency: monthly
+cover: ⛅
+
+ai_context:
+  instructions: |
+    気温・降水量の実況と平年の比較、地震の発生分布、天気予報の取得に使う。
+    表ごとに収録期間がまったく違うので、期間の前提を必ず確認する。
+    mart_jma_normals_daily は1991〜2020年の30年平均（平年値）で、時系列ではない。
+    観測所×月日で1行。
+    mart_jma_daily_observations は気象官署の日別実況で、直近数か月分だけを持つ（2万7千行・156地点）。
+    mart_jma_hourly_observations は主要47地点の直近数日分。長期の時系列分析には使えない。
+    mart_jma_hypocenters は地震月報の震源で2019〜2023年。カタログは確定まで数年かかるため、
+    直近の地震は入っていない。
+    mart_jma_forecast_weather はビルド時点の最新発表の1スナップショットで、履歴を持たない。
+    観測所の番号体系が2つある。アメダスは station_id（5桁）、気象官署は block_no（ブロック番号）で、
+    直接は結合できない（地点名で対応づける）。
+    欠測・現象なし（降雪や積雪など）はどちらも NULL なので、0 と同じには扱えない。
+    時別観測値の hour は1〜24 で、24 は翌日0時を指す。
+  synonyms: [気象庁, アメダス, 平年値, 震源, 天気予報, 気温, 降水量]
+  examples:
+    - ある地点の気温が平年と比べてどうだったか見たい
+    - 震源の分布をマグニチュード別に地図に出したい
+    - 主要地点の時間帯別の気温と降水量を出したい
+
+schemas:
+  - name: main
+    title: メイン

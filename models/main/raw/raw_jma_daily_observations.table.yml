@@ -1,0 +1,23 @@
+schema: main
+name: raw_jma_daily_observations
+description: 気象官署の日別観測値（過去の気象データ検索の日別値ページ daily_s1.php）の生データ
+published: false
+fields:
+  - name: block_no
+    description: 観測所番号（気象官署、5桁のブロック番号）
+  - name: observed_date
+    description: 観測日
+  - name: precipitation_mm
+    description: 日降水量の合計（mm）
+  - name: temp_avg_c
+    description: 日平均気温（℃）
+  - name: temp_max_c
+    description: 日最高気温（℃）
+  - name: temp_min_c
+    description: 日最低気温（℃）
+  - name: sunshine_hours
+    description: 日照時間（時間）
+  - name: snowfall_cm
+    description: 降雪の合計（cm）
+  - name: snow_depth_cm
+    description: 最深積雪（cm）

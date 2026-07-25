@@ -1,0 +1,40 @@
+schema: main
+name: mart_jma_stations
+title: 気象庁 観測所一覧（アメダス）
+description: 気象庁のアメダス観測所一覧マスタ。各観測所のID、名称（日本語・カナ・英語）、緯度経度、標高、観測所種別、気象官署かどうか、観測要素を収録する。
+keywords:
+  - 気象
+  - 観測所
+  - アメダス
+  - 気象庁
+published: true
+sources:
+  - path: https://www.jma.go.jp/bosai/amedas/
+fields:
+  - name: station_id
+    title: 観測所ID
+    description: アメダス番号（5桁）
+  - name: name
+    title: 観測所名
+  - name: name_kana
+    title: 観測所名（カナ）
+  - name: name_en
+    title: 観測所名（英語）
+  - name: lat
+    title: 緯度
+    description: 十進度
+  - name: lon
+    title: 経度
+    description: 十進度
+  - name: elevation
+    title: 標高
+    description: メートル
+  - name: station_type
+    title: 観測所種別
+    description: 気象庁の分類（A〜G）。A/Bが気象官署相当
+  - name: is_office
+    title: 気象官署フラグ
+    description: 種別A/B（管区・地方気象台や測候所相当）
+  - name: elems
+    title: 観測種目フラグ
+    description: 気象庁仕様の8桁文字列（観測している要素を表す）

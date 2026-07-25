@@ -1,0 +1,45 @@
+schema: main
+name: mart_jma_daily_observations
+title: 気象庁 日別観測値（気象官署）
+description: 気象官署の日別観測値（実況値）。観測所×日ごとに日平均・日最高・日最低気温、 日降水量、日照時間、降雪・最深積雪を収録する。block_noで mart_jma_observation_stationsと結合できる。日別平年値（mart_jma_normals_daily、
+  観測所名で対応づけ）と対にすると「実況 vs 平年」の比較ができる。全国の気象官署を 対象に直近数か月分を収録する（過去月の確定値は変わらない）。観測していない要素や 現象のない日（降雪・積雪など）、欠測はNULL。
+keywords:
+  - 気象
+  - 観測値
+  - 気温
+  - 降水量
+  - 日照時間
+  - 積雪
+  - 気象官署
+  - 気象庁
+published: true
+sources:
+  - path: https://www.data.jma.go.jp/stats/etrn/index.php
+fields:
+  - name: block_no
+    title: 観測所番号
+    description: 気象官署のブロック番号（5桁）。mart_jma_observation_stationsと結合できる
+  - name: observed_date
+    title: 観測日
+    description: 観測日（日本標準時）
+  - name: temp_avg_c
+    title: 日平均気温
+    description: 摂氏（℃）
+  - name: temp_max_c
+    title: 日最高気温
+    description: 摂氏（℃）
+  - name: temp_min_c
+    title: 日最低気温
+    description: 摂氏（℃）
+  - name: precipitation_mm
+    title: 日降水量
+    description: 合計（mm）。現象のない日・欠測はNULL
+  - name: sunshine_hours
+    title: 日照時間
+    description: 時間
+  - name: snowfall_cm
+    title: 降雪の合計
+    description: センチメートル（cm）。現象のない日・観測なしはNULL
+  - name: snow_depth_cm
+    title: 最深積雪
+    description: センチメートル（cm）。現象のない日・観測なしはNULL
