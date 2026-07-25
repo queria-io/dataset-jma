@@ -1,0 +1,43 @@
+schema: main
+name: mart_jma_normals_daily
+title: 気象庁 日別平年値（アメダス）
+description: アメダス観測所の日別平年値（統計期間1991〜2020年）。観測所×月日ごとに 日平均・日最高・日最低気温、日照時間、降水量、積雪の深さの30年平均を収録。 station_idでmart_jma_stationsと結合できる。観測していない要素や統計値なしの
+  日はNULL。2月は閏日（29日）まで収録する。
+keywords:
+  - 気象
+  - 平年値
+  - 気温
+  - 降水量
+  - アメダス
+  - 気象庁
+published: true
+sources:
+  - path: https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html
+fields:
+  - name: station_id
+    title: 観測所ID
+    description: アメダス番号（5桁）。mart_jma_stationsと結合できる
+  - name: month
+    title: 月
+    description: 1〜12
+  - name: day
+    title: 日
+    description: 1〜31（2月は閏日29日まで）
+  - name: temp_avg_c
+    title: 日平均気温の平年値
+    description: 摂氏（℃）
+  - name: temp_max_c
+    title: 日最高気温の平年値
+    description: 摂氏（℃）
+  - name: temp_min_c
+    title: 日最低気温の平年値
+    description: 摂氏（℃）
+  - name: sunshine_hours
+    title: 日照時間の平年値
+    description: 時間
+  - name: precipitation_mm
+    title: 降水量の平年値
+    description: ミリメートル（mm）
+  - name: snow_depth_cm
+    title: 積雪の深さ（日最大）の平年値
+    description: センチメートル（cm）

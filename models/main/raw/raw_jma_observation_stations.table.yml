@@ -1,0 +1,17 @@
+schema: main
+name: raw_jma_observation_stations
+description: 気象官署の観測所レジストリ（過去の気象データ検索の観測所選択ページ）の生データ
+published: false
+fields:
+  - name: block_no
+    description: 観測所番号（気象官署、5桁のブロック番号）
+  - name: prec_no
+    description: 都府県・地方の区分コード
+  - name: station_name
+    description: 観測所名（漢字）
+  - name: station_kana
+    description: 観測所名（カナ）
+  - name: lat
+    description: 緯度（十進度）
+  - name: lon
+    description: 経度（十進度）

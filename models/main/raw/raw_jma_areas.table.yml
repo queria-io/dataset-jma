@@ -1,0 +1,19 @@
+schema: main
+name: raw_jma_areas
+description: 気象庁の地域コード（area.json）の生データ
+published: false
+fields:
+  - name: area_code
+    description: 地域コード
+  - name: level
+    description: 階層（center/office/class10/class15/class20）
+  - name: name
+    description: 地域名
+  - name: name_en
+    description: 地域名（英語）
+  - name: name_kana
+    description: 地域名（カナ、class20のみ）
+  - name: office_name
+    description: 担当気象台名（center/officeのみ）
+  - name: parent_code
+    description: 親地域コード
