@@ -1,6 +1,6 @@
 {# 気象庁アメダス観測所一覧（amedastable.json を NDJSON に整形したもの）
    元データ: https://www.jma.go.jp/bosai/amedas/const/amedastable.json
-   main.py が緯度経度を十進度化し .fdl/jma_stations.ndjson に保存 #}
+   main.py が緯度経度を十進度化し .queria/jma_stations.ndjson に保存 #}
 
 {{
     config(
@@ -10,7 +10,7 @@
 
 select *
 from read_json(
-    '.fdl/jma_stations.ndjson',
+    '.queria/jma_stations.ndjson',
     format='newline_delimited',
     columns={
         'station_id': 'VARCHAR',
