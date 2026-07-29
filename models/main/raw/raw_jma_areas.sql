@@ -1,6 +1,6 @@
 {# 気象庁の地域コード（area.json を level 付きでフラット化したもの）
    元データ: https://www.jma.go.jp/bosai/common/const/area.json
-   main.py が centers/offices/class10s/class15s/class20s を縦持ちにして .fdl/jma_areas.ndjson に保存 #}
+   main.py が centers/offices/class10s/class15s/class20s を縦持ちにして .queria/jma_areas.ndjson に保存 #}
 
 {{
     config(
@@ -10,7 +10,7 @@
 
 select *
 from read_json(
-    '.fdl/jma_areas.ndjson',
+    '.queria/jma_areas.ndjson',
     format='newline_delimited',
     columns={
         'area_code': 'VARCHAR',

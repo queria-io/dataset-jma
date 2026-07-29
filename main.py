@@ -3,7 +3,7 @@
 非公式 JSON API からマスタ（観測所一覧・地域コード）と府県予報区ごとの短期天気予報を
 取得し、地震月報（カタログ編）の震源データ（96 バイト固定長）と平年値ダウンロードの
 アメダス日別平年値（1991〜2020 年）を取得・整形して、DuckDB が読みやすい NDJSON に
-整形して .fdl/ に保存してから dbt を実行する。
+整形して .queria/ に保存してから dbt を実行する。
 """
 
 import calendar
@@ -129,15 +129,15 @@ USER_AGENT = "queria-dataset-jma/0.1 (+https://github.com/queria-io/dataset-jma)
 
 _last_request_at = 0.0
 
-FDL_DIR = Path(".fdl")
-STATIONS_PATH = FDL_DIR / "jma_stations.ndjson"
-AREAS_PATH = FDL_DIR / "jma_areas.ndjson"
-NORMALS_DAILY_PATH = FDL_DIR / "jma_normals_daily.ndjson"
-HYPOCENTERS_PATH = FDL_DIR / "jma_hypocenters.ndjson"
-FORECASTS_PATH = FDL_DIR / "jma_forecasts.ndjson"
-OBS_STATIONS_PATH = FDL_DIR / "jma_observation_stations.ndjson"
-DAILY_OBS_PATH = FDL_DIR / "jma_daily_observations.ndjson"
-HOURLY_OBS_PATH = FDL_DIR / "jma_hourly_observations.ndjson"
+WORK_DIR = Path(".queria")
+STATIONS_PATH = WORK_DIR / "jma_stations.ndjson"
+AREAS_PATH = WORK_DIR / "jma_areas.ndjson"
+NORMALS_DAILY_PATH = WORK_DIR / "jma_normals_daily.ndjson"
+HYPOCENTERS_PATH = WORK_DIR / "jma_hypocenters.ndjson"
+FORECASTS_PATH = WORK_DIR / "jma_forecasts.ndjson"
+OBS_STATIONS_PATH = WORK_DIR / "jma_observation_stations.ndjson"
+DAILY_OBS_PATH = WORK_DIR / "jma_daily_observations.ndjson"
+HOURLY_OBS_PATH = WORK_DIR / "jma_hourly_observations.ndjson"
 
 # 気象官署（管区・地方気象台や測候所相当）の観測所種別。
 # amedas のうち type A/B が気象官署に相当する。
@@ -182,7 +182,7 @@ MAG_NEGATIVE_PREFIX = {"A": -1, "B": -2, "C": -3}
 
 
 def main() -> None:
-    FDL_DIR.mkdir(exist_ok=True)
+    WORK_DIR.mkdir(exist_ok=True)
     _build_stations()
     _build_areas()
     _build_normals_daily()

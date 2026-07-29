@@ -1,7 +1,7 @@
 {# 気象庁 地震月報（カタログ編）の震源データ（96 バイト固定長を整形したもの）
    元データ: https://www.data.jma.go.jp/eqev/data/bulletin/hypo.html
    main.py が年別 ZIP を取得し緯度経度・深さ・マグニチュードを十進化して
-   .fdl/jma_hypocenters.ndjson に保存 #}
+   .queria/jma_hypocenters.ndjson に保存 #}
 
 {{
     config(
@@ -11,7 +11,7 @@
 
 select *
 from read_json(
-    '.fdl/jma_hypocenters.ndjson',
+    '.queria/jma_hypocenters.ndjson',
     format='newline_delimited',
     columns={
         'record_type': 'VARCHAR',

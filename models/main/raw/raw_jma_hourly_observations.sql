@@ -1,7 +1,7 @@
 {# 気象官署の時別観測値（過去の気象データ検索の時別値ページ hourly_s1.php を整形したもの）
    元データ: https://www.data.jma.go.jp/stats/etrn/index.php
    main.py が主要な気象官署ごとに直近数日分の時別値を取得し、気圧・降水量・気温・湿度・
-   風・日照・積雪を観測所×日時で .fdl/jma_hourly_observations.ndjson に保存する #}
+   風・日照・積雪を観測所×日時で .queria/jma_hourly_observations.ndjson に保存する #}
 
 {{
     config(
@@ -11,7 +11,7 @@
 
 select *
 from read_json(
-    '.fdl/jma_hourly_observations.ndjson',
+    '.queria/jma_hourly_observations.ndjson',
     format='newline_delimited',
     columns={
         'block_no': 'VARCHAR',

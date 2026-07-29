@@ -1,7 +1,7 @@
 {# アメダス日別平年値（normal_amedas_daily.zip を NDJSON に整形したもの）
    元データ: https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html
    main.py が要素番号 0500/0600/0700/3500/4000/6200 を観測所×月日に展開し
-   実単位へスケールして .fdl/jma_normals_daily.ndjson に保存する #}
+   実単位へスケールして .queria/jma_normals_daily.ndjson に保存する #}
 
 {{
     config(
@@ -11,7 +11,7 @@
 
 select *
 from read_json(
-    '.fdl/jma_normals_daily.ndjson',
+    '.queria/jma_normals_daily.ndjson',
     format='newline_delimited',
     columns={
         'station_id': 'VARCHAR',
