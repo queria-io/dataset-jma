@@ -1,8 +1,8 @@
 ## データ出典
 
-[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）と、気象官署の日別観測値・時別観測値（実況値）を収録しています。
+[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）、気象官署の日別観測値・時別観測値（実況値）と、台風の経路（ベストトラック、1951年〜）を収録しています。
 
-観測所一覧・地域コード・天気予報は非公式の JSON 配信（気象庁サイトが内部利用しているエンドポイント）を、日別平年値は平年値ダウンロードの配布ファイルを、気象官署の観測所一覧・日別観測値・時別観測値は過去の気象データ検索のページを出典として利用しています。
+観測所一覧・地域コード・天気予報は非公式の JSON 配信（気象庁サイトが内部利用しているエンドポイント）を、日別平年値は平年値ダウンロードの配布ファイルを、気象官署の観測所一覧・日別観測値・時別観測値は過去の気象データ検索のページを、台風の経路は RSMC 東京・台風センターのベストトラック配布ファイルを出典として利用しています。
 
 - 観測所一覧: https://www.jma.go.jp/bosai/amedas/const/amedastable.json
 - 地域コード: https://www.jma.go.jp/bosai/common/const/area.json
@@ -10,6 +10,7 @@
 - 震源データ（地震月報 カタログ編）: https://www.data.jma.go.jp/eqev/data/bulletin/hypo.html
 - 日別平年値: https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html （normal_amedas_daily）
 - 気象官署の観測所一覧・日別観測値: https://www.data.jma.go.jp/stats/etrn/index.php （過去の気象データ検索）
+- 台風の経路（ベストトラック）: https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/index.html
 
 ## テーブル: mart_jma_stations
 
@@ -105,6 +106,29 @@
 - station_count: 震源決定に使用した観測点数（INTEGER）
 - hypocenter_flag: 震源決定フラグ（VARCHAR、K:気象庁震源 S:参考震源 k/s:簡易 A/a:自動 N:震源固定等 F:遠地）
 
+## テーブル: mart_jma_typhoon_tracks
+
+台風の経路（ベストトラック）です。1951年以降に発生した台風について、6時間ごと（上陸前後などは3時間ごと）の中心位置・中心気圧・最大風速・暴風域と強風域の半径を持ちます。事後解析で確定した経路なので、速報の経路とは値が異なります。1台風＝複数行で、international_id（国際番号）で台風を識別します。約1,900個・約7万点を収録しています。
+
+収録期間が要素によって違う点に注意してください。最大風速と暴風域・強風域の半径は1977年以降にしかなく、上陸・通過フラグが付くのは1991年以降の台風だけです（それより前は実際に上陸した台風でも false になるため、上陸数の長期比較には使えません）。階級には台風だけでなく熱帯低気圧・温帯低気圧の期間も含まれるので、台風としての統計を取るときは grade_code in ('3','4','5') で絞ります。
+
+- international_id: 国際番号（VARCHAR、西暦下2桁＋年内の通し番号。例 2604 は2026年の台風4号）
+- season: 発生年（INTEGER、国際番号の年。年をまたぐ台風では解析時刻の年と一致しないことがある）
+- serial_number: 号数（INTEGER、年内の通し番号）
+- name: 国際名（VARCHAR、アジア名または当時の英語名。命名前の台風は NULL）
+- analysis_time: 解析時刻（TIMESTAMP、日本標準時）
+- analysis_time_utc: 解析時刻（TIMESTAMP、協定世界時。元データの時刻）
+- grade_code / grade: 階級のコードと名称（VARCHAR、2:熱帯低気圧 3:台風TS 4:台風STS 5:台風TY 6:温帯低気圧 7:責任領域に入った直後 9:TS以上の熱帯低気圧）
+- latitude / longitude: 中心の緯度 / 経度（DOUBLE、十進度・0.1度単位。日付変更線を越えた経度は180を超える値になる）
+- central_pressure_hpa: 中心気圧（INTEGER、hPa）
+- max_wind_speed_kt: 最大風速（INTEGER、ノット。1977年より前と熱帯低気圧・温帯低気圧の期間は NULL）
+- max_wind_speed_ms: 最大風速（DOUBLE、m/s。ノットからの換算値）
+- wind50_direction_code / wind50_direction: 暴風域（50ノット以上）の長径方向コードと名称（VARCHAR、0:なし 1:北東 … 8:北 9:同心円）
+- wind50_longest_radius_nm / wind50_shortest_radius_nm: 暴風域の長径 / 短径（INTEGER、海里。1海里=1.852km。暴風域がない場合は0、1977年より前は NULL）
+- wind30_direction_code / wind30_direction: 強風域（30ノット以上）の長径方向コードと名称（VARCHAR、コード体系は暴風域と同じ）
+- wind30_longest_radius_nm / wind30_shortest_radius_nm: 強風域の長径 / 短径（INTEGER、海里。1977年より前は NULL）
+- is_landfall: 上陸・通過（BOOLEAN、この解析時刻から1時間以内に日本の陸地へ上陸または通過したか。1991年以降の台風のみ）
+
 ## テーブル: mart_jma_forecast_weather
 
 府県予報区ごとの短期天気予報（今日・明日・明後日）です。一次細分区域（class10）別に、対象日時ごとの天気・風・波を持ちます。area_code で mart_jma_areas（level=class10）と、office_code で mart_jma_areas（level=office）と結合できます。
@@ -123,7 +147,7 @@
 
 ### データ更新手順
 
-main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）と、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）・時別値ページ（hourly_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・日別観測値の観測所×日への整形・時別観測値の観測所×日時への整形を行って `.queria/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh` で実行する（Queria に公開する）。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で、時別観測値の収録日数は `OBS_HOURLY_DAYS`・対象地点は `MAJOR_STATION_NAMES` で調整する。
+main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）、RSMC 東京・台風センターのベストトラック ZIP（80 桁固定長）と、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）・時別値ページ（hourly_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・ベストトラックのヘッダ行（台風の属性）の各解析行への展開・日別観測値の観測所×日への整形・時別観測値の観測所×日時への整形を行って `.queria/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh` で実行する（Queria に公開する）。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で、時別観測値の収録日数は `OBS_HOURLY_DAYS`・対象地点は `MAJOR_STATION_NAMES` で調整する。
 
 ## ライセンス
 
