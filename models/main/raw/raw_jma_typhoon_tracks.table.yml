@@ -1,0 +1,41 @@
+schema: main
+name: raw_jma_typhoon_tracks
+description: 気象庁 台風ベストトラック（事後解析による台風経路）の生データ
+published: false
+fields:
+  - name: international_id
+    description: 国際番号（西暦下2桁 + 年内の通し番号、例 2604）
+  - name: season
+    description: 台風の発生年（国際番号の年）
+  - name: serial_number
+    description: 年内の通し番号（台風何号か）
+  - name: name
+    description: 国際名（アジア名。命名前の台風はNULL）
+  - name: analysis_time
+    description: 解析時刻（日本標準時、6時間間隔）
+  - name: analysis_time_utc
+    description: 解析時刻（協定世界時）
+  - name: grade_code
+    description: 階級コード（2:熱帯低気圧 3:台風TS 4:台風STS 5:台風TY 6:温帯低気圧 7:責任領域に入った直後 9:TS以上の熱帯低気圧）
+  - name: latitude
+    description: 中心の緯度（十進度）
+  - name: longitude
+    description: 中心の経度（十進度）。日付変更線を越えた場合は180を超える値になる
+  - name: central_pressure_hpa
+    description: 中心気圧（hPa）
+  - name: max_wind_speed_kt
+    description: 最大風速（ノット）。1977年より前と、熱帯低気圧・温帯低気圧の期間はNULL
+  - name: wind50_direction_code
+    description: 暴風域（50ノット以上）の長径方向コード（0:なし 1:北東 2:東 3:南東 4:南 5:南西 6:西 7:北西 8:北 9:同心円）
+  - name: wind50_longest_radius_nm
+    description: 暴風域の長径（海里）。1977年より前はNULL
+  - name: wind50_shortest_radius_nm
+    description: 暴風域の短径（海里）
+  - name: wind30_direction_code
+    description: 強風域（30ノット以上）の長径方向コード（コード体系は暴風域と同じ）
+  - name: wind30_longest_radius_nm
+    description: 強風域の長径（海里）。1977年より前はNULL
+  - name: wind30_shortest_radius_nm
+    description: 強風域の短径（海里）
+  - name: is_landfall
+    description: 解析時刻から1時間以内に日本の陸地へ上陸・通過したか。フラグが付くのは1991年以降の台風だけ

@@ -2,8 +2,8 @@
 
 非公式 JSON API からマスタ（観測所一覧・地域コード）と府県予報区ごとの短期天気予報を
 取得し、地震月報（カタログ編）の震源データ（96 バイト固定長）と平年値ダウンロードの
-アメダス日別平年値（1991〜2020 年）を取得・整形して、DuckDB が読みやすい NDJSON に
-整形して .queria/ に保存してから dbt を実行する。
+アメダス日別平年値（1991〜2020 年）、台風のベストトラック（1951 年〜）を取得・整形して、
+DuckDB が読みやすい NDJSON に整形して .queria/ に保存してから dbt を実行する。
 """
 
 import calendar
@@ -11,7 +11,7 @@ import io
 import json
 import re
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import urllib.error
 import urllib.request
 import zipfile
@@ -36,6 +36,17 @@ HYPOCENTER_BASE_URL = "https://www.data.jma.go.jp/eqev/data/bulletin/data/hypo"
 # 取り込む年（直近の確定済み年から 5 年）。カタログは確定までに数年のラグがあり、
 # 現時点の最新確定年は 2023 年。年を追加すれば取り込み範囲を拡張できる。
 HYPOCENTER_YEARS = [2019, 2020, 2021, 2022, 2023]
+
+# 台風のベストトラック（事後解析による経路）。RSMC 東京・台風センターが 1951 年以降の
+# 全期間を 1 つの ZIP（80 桁固定長のテキスト 1 ファイル）で配布する。
+# ヘッダ行（先頭 '66666'）1 本に、その台風の 6 時間ごとの解析行が続く交互形式。
+# https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/e_format_bst.html
+BEST_TRACK_URL = (
+    "https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/bst_all.zip"
+)
+
+# ベストトラックのヘッダ行を示す先頭 5 桁。
+BEST_TRACK_HEADER_INDICATOR = "66666"
 
 # 府県予報区ごとの天気予報 JSON。area.json の offices（府県予報区）コードを URL に埋める。
 # 各ファイルの先頭要素が短期予報（今日・明日・明後日）で、その timeSeries[0] が
@@ -134,6 +145,7 @@ STATIONS_PATH = WORK_DIR / "jma_stations.ndjson"
 AREAS_PATH = WORK_DIR / "jma_areas.ndjson"
 NORMALS_DAILY_PATH = WORK_DIR / "jma_normals_daily.ndjson"
 HYPOCENTERS_PATH = WORK_DIR / "jma_hypocenters.ndjson"
+TYPHOON_TRACKS_PATH = WORK_DIR / "jma_typhoon_tracks.ndjson"
 FORECASTS_PATH = WORK_DIR / "jma_forecasts.ndjson"
 OBS_STATIONS_PATH = WORK_DIR / "jma_observation_stations.ndjson"
 DAILY_OBS_PATH = WORK_DIR / "jma_daily_observations.ndjson"
@@ -187,6 +199,7 @@ def main() -> None:
     _build_areas()
     _build_normals_daily()
     _build_hypocenters()
+    _build_typhoon_tracks()
     _build_forecasts()
     stations = _build_observation_stations()
     _build_daily_observations(stations)
@@ -485,6 +498,106 @@ def _build_hypocenters() -> None:
                 count += year_count
                 print(f"    h{year}: {year_count} hypocenters")
     print(f"  jma_hypocenters.ndjson: {count} hypocenters")
+
+
+def _bst_int(field: str):
+    """ベストトラックの数値欄をパースする。空欄（その年代では未収録の要素）は欠損。"""
+    value = field.strip()
+    return int(value) if value.isdigit() else None
+
+
+def _bst_year(yy: str) -> int:
+    """2 桁年を西暦に直す。収録は 1951 年以降なので 51〜99 は 1900 年代。"""
+    value = int(yy)
+    return 1900 + value if value >= 51 else 2000 + value
+
+
+def _bst_wind_speed(field: str):
+    """最大風速欄（kt）をパースする。1977 年より前は空欄、熱帯低気圧・温帯低気圧の
+    期間は 000（解析なし）で、どちらも欠損として扱う。"""
+    value = _bst_int(field)
+    return value or None
+
+
+def _bst_radius(direction_field: str, radius_field: str):
+    """暴風域・強風域の半径欄（海里）をパースする。方向欄が空なら未収録として欠損。
+    0000 は「その階級の風域なし」なので 0 のまま残す。"""
+    if direction_field.strip() == "":
+        return None
+    return _bst_int(radius_field)
+
+
+def _parse_best_track_header(line: str) -> dict:
+    """ヘッダ行から台風 1 個ぶんの属性を取り出す。国際番号は「西暦下 2 桁 + 年内の通し番号」。"""
+    international_id = line[6:10]
+    return {
+        "international_id": international_id,
+        "season": _bst_year(international_id[0:2]),
+        "serial_number": int(international_id[2:4]),
+        "name": line[30:50].strip() or None,
+    }
+
+
+def _parse_best_track_point(line: str, header: dict) -> dict | None:
+    """解析行 1 本を、ヘッダの属性を展開した 1 行の dict にする。
+
+    位置は 0.1 度単位、半径は海里、風速はノットで格納されている。時刻は UTC なので
+    日本標準時（+9 時間）に直した列も併せて持たせる。
+    """
+    time_field = line[0:8]
+    if not time_field.isdigit():
+        return None
+    analysis_utc = datetime(
+        _bst_year(time_field[0:2]),
+        int(time_field[2:4]),
+        int(time_field[4:6]),
+        int(time_field[6:8]),
+    )
+    latitude = _bst_int(line[15:18])
+    longitude = _bst_int(line[19:23])
+    return {
+        **header,
+        "analysis_time": (analysis_utc + timedelta(hours=9)).strftime("%Y-%m-%d %H:%M:%S"),
+        "analysis_time_utc": analysis_utc.strftime("%Y-%m-%d %H:%M:%S"),
+        "grade_code": line[13].strip() or None,
+        "latitude": round(latitude / 10, 1) if latitude is not None else None,
+        "longitude": round(longitude / 10, 1) if longitude is not None else None,
+        "central_pressure_hpa": _bst_int(line[24:28]),
+        "max_wind_speed_kt": _bst_wind_speed(line[33:36]),
+        "wind50_direction_code": line[41:42].strip() or None,
+        "wind50_longest_radius_nm": _bst_radius(line[41:42], line[42:46]),
+        "wind50_shortest_radius_nm": _bst_radius(line[41:42], line[47:51]),
+        "wind30_direction_code": line[52:53].strip() or None,
+        "wind30_longest_radius_nm": _bst_radius(line[52:53], line[53:57]),
+        "wind30_shortest_radius_nm": _bst_radius(line[52:53], line[58:62]),
+        "is_landfall": line[71:72] == "#",
+    }
+
+
+def _build_typhoon_tracks() -> None:
+    """ベストトラックの ZIP を取得し、ヘッダの台風属性を各解析行に展開した NDJSON に整形する。"""
+    data = _fetch_bytes(BEST_TRACK_URL)
+    typhoons = 0
+    count = 0
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        member = zf.namelist()[0]
+        with zf.open(member) as fh, TYPHOON_TRACKS_PATH.open("w", encoding="utf-8") as f:
+            text = io.TextIOWrapper(fh, encoding="ascii", errors="replace")
+            header = None
+            for line in text:
+                record = line.rstrip("\r\n").ljust(80)
+                if record.startswith(BEST_TRACK_HEADER_INDICATOR):
+                    header = _parse_best_track_header(record)
+                    typhoons += 1
+                    continue
+                if header is None:
+                    continue
+                row = _parse_best_track_point(record, header)
+                if row is None:
+                    continue
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                count += 1
+    print(f"  jma_typhoon_tracks.ndjson: {count} points / {typhoons} typhoons")
 
 
 def _forecast_weather_rows(office_code: str, data: list) -> list[dict]:
