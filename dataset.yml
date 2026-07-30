@@ -1,7 +1,7 @@
 spec_version: "0.1"
 name: jma
 title: 気象庁 気象データ
-description: 気象庁の観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ（発生日時・震央位置・深さ・マグニチュード）と、アメダス観測所の日別平年値（気温・降水量など、1991〜2020年）
+description: 気象庁の観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ（発生日時・震央位置・深さ・マグニチュード）、アメダス観測所の日別平年値（気温・降水量など、1991〜2020年）と、台風の経路（ベストトラック、1951年〜）
 keywords:
   - 気象
   - 気温
@@ -13,6 +13,8 @@ keywords:
   - 震源
   - マグニチュード
   - 平年値
+  - 台風
+  - 経路
 homepage: https://github.com/queria-io/dataset-jma
 language: ja
 
@@ -26,13 +28,15 @@ sources:
     path: https://www.data.jma.go.jp/stats/etrn/index.php
   - title: 地震月報（カタログ編）
     path: https://www.data.jma.go.jp/eqev/data/bulletin/hypo.html
+  - title: RSMC 東京・台風センター ベストトラック
+    path: https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/index.html
 
 contributors:
   - title: 気象庁
     path: https://www.jma.go.jp/
     roles: [rightsHolder]
 
-temporal_coverage: { start: "1991", end: null }
+temporal_coverage: { start: "1951", end: null }
 spatial_coverage: [JP]
 update_frequency: monthly
 cover: ⛅
@@ -48,15 +52,22 @@ ai_context:
     mart_jma_hypocenters は地震月報の震源で2019〜2023年。カタログは確定まで数年かかるため、
     直近の地震は入っていない。
     mart_jma_forecast_weather はビルド時点の最新発表の1スナップショットで、履歴を持たない。
+    mart_jma_typhoon_tracks は1951年以降の全台風の経路で、この中で唯一の長期時系列。
+    台風1個 × 6時間ごとの解析で1行。国際番号（international_id）で台風を識別する。
+    最大風速と暴風域・強風域の半径は1977年以降しか収録がなく、上陸フラグ（is_landfall）が
+    付くのは1991年以降。それより前の台風は上陸していても false になるので、上陸数の
+    長期比較には使えない。階級（grade）は台風以外に熱帯低気圧・温帯低気圧の期間も含むので、
+    台風としての統計を取るときは grade_code in ('3','4','5') で絞る。
     観測所の番号体系が2つある。アメダスは station_id（5桁）、気象官署は block_no（ブロック番号）で、
     直接は結合できない（地点名で対応づける）。
     欠測・現象なし（降雪や積雪など）はどちらも NULL なので、0 と同じには扱えない。
     時別観測値の hour は1〜24 で、24 は翌日0時を指す。
-  synonyms: [気象庁, アメダス, 平年値, 震源, 天気予報, 気温, 降水量]
+  synonyms: [気象庁, アメダス, 平年値, 震源, 天気予報, 気温, 降水量, 台風, ベストトラック]
   examples:
     - ある地点の気温が平年と比べてどうだったか見たい
     - 震源の分布をマグニチュード別に地図に出したい
     - 主要地点の時間帯別の気温と降水量を出したい
+    - 台風の経路を地図に描いて中心気圧の変化を見たい
 
 schemas:
   - name: main
