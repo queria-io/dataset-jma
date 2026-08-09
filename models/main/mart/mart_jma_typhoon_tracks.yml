@@ -7,119 +7,48 @@ models:
     config:
       contract:
         enforced: true
-    meta:
-      title: "気象庁 台風経路（ベストトラック）"
-      tags: ["台風", "経路", "中心気圧", "最大風速", "暴風域", "気象庁"]
-      source_url: "https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/index.html"
-      published: true
     columns:
       - name: international_id
         data_type: VARCHAR
-        meta:
-          title: 国際番号
-          description: 西暦下2桁 + 年内の通し番号（例 2604 は2026年の台風4号）
       - name: season
         data_type: INTEGER
-        meta:
-          title: 発生年
-          description: 国際番号の年。年をまたぐ台風では解析時刻の年と一致しないことがある
       - name: serial_number
         data_type: INTEGER
-        meta:
-          title: 号数
-          description: 年内の通し番号（台風何号か）
       - name: name
         data_type: VARCHAR
-        meta:
-          title: 国際名
-          description: アジア名（2000年以降）または当時の英語名。命名前の台風はNULL
       - name: analysis_time
         data_type: TIMESTAMP
-        meta:
-          title: 解析時刻
-          description: 日本標準時。原則6時間間隔（上陸前後などは3時間間隔になることがある）
       - name: analysis_time_utc
         data_type: TIMESTAMP
-        meta:
-          title: 解析時刻（UTC）
-          description: 元データの協定世界時
       - name: grade_code
         data_type: VARCHAR
-        meta:
-          title: 階級コード
-          description: 2:熱帯低気圧 3:台風TS 4:台風STS 5:台風TY 6:温帯低気圧 7:責任領域に入った直後 9:TS以上の熱帯低気圧
       - name: grade
         data_type: VARCHAR
-        meta:
-          title: 階級
-          description: 階級コードの名称。台風として扱われるのはTS・STS・TYの3階級
       - name: latitude
         data_type: DOUBLE
-        meta:
-          title: 緯度
-          description: 中心の緯度（十進度、0.1度単位）
       - name: longitude
         data_type: DOUBLE
-        meta:
-          title: 経度
-          description: 中心の経度（十進度、0.1度単位）。日付変更線を越えた場合は180を超える値（最大188.0）になる
       - name: central_pressure_hpa
         data_type: INTEGER
-        meta:
-          title: 中心気圧
-          description: 中心気圧（hPa）
       - name: max_wind_speed_kt
         data_type: INTEGER
-        meta:
-          title: 最大風速（ノット）
-          description: 10分間平均の最大風速。1977年より前と、熱帯低気圧・温帯低気圧の期間はNULL
       - name: max_wind_speed_ms
         data_type: DOUBLE
-        meta:
-          title: 最大風速（m/s）
-          description: 最大風速をm/sに換算した値（1ノット=0.514444m/s）
       - name: wind50_direction_code
         data_type: VARCHAR
-        meta:
-          title: 暴風域方向コード
-          description: 0:なし 1:北東 2:東 3:南東 4:南 5:南西 6:西 7:北西 8:北 9:同心円
       - name: wind50_direction
         data_type: VARCHAR
-        meta:
-          title: 暴風域の長径方向
-          description: 暴風域（50ノット以上）の長径がどの方向かの名称
       - name: wind50_longest_radius_nm
         data_type: INTEGER
-        meta:
-          title: 暴風域の長径
-          description: 50ノット以上の風域の長径（海里、1海里=1.852km）。暴風域がない場合は0で、1977年より前はNULL
       - name: wind50_shortest_radius_nm
         data_type: INTEGER
-        meta:
-          title: 暴風域の短径
-          description: 50ノット以上の風域の短径（海里）
       - name: wind30_direction_code
         data_type: VARCHAR
-        meta:
-          title: 強風域方向コード
-          description: コード体系は暴風域方向コードと同じ
       - name: wind30_direction
         data_type: VARCHAR
-        meta:
-          title: 強風域の長径方向
-          description: 強風域（30ノット以上）の長径がどの方向かの名称
       - name: wind30_longest_radius_nm
         data_type: INTEGER
-        meta:
-          title: 強風域の長径
-          description: 30ノット以上の風域の長径（海里、1海里=1.852km）。1977年より前はNULL
       - name: wind30_shortest_radius_nm
         data_type: INTEGER
-        meta:
-          title: 強風域の短径
-          description: 30ノット以上の風域の短径（海里）
       - name: is_landfall
         data_type: BOOLEAN
-        meta:
-          title: 上陸・通過
-          description: この解析時刻から1時間以内に日本の陸地へ上陸または通過したか。フラグが付くのは1991年以降の台風だけで、それより前は実際に上陸した台風でも false になる

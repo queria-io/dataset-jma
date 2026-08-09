@@ -11,39 +11,16 @@ models:
     config:
       contract:
         enforced: true
-    meta:
-      title: "気象庁 観測所（気象官署）"
-      tags: ["気象", "観測所", "気象官署", "気象台", "気象庁"]
-      source_url: "https://www.data.jma.go.jp/stats/etrn/index.php"
-      published: true
     columns:
       - name: block_no
         data_type: VARCHAR
-        meta:
-          title: 観測所番号
-          description: 気象官署のブロック番号（5桁）。mart_jma_daily_observationsと結合できる
       - name: prec_no
         data_type: VARCHAR
-        meta:
-          title: 地方区分コード
-          description: 都府県・地方の区分コード（北海道などは複数に分かれる）
       - name: station_name
         data_type: VARCHAR
-        meta:
-          title: 観測所名
-          description: 漢字表記
       - name: station_kana
         data_type: VARCHAR
-        meta:
-          title: 観測所名（カナ）
-          description: カナ表記
       - name: lat
         data_type: DOUBLE
-        meta:
-          title: 緯度
-          description: 十進度（世界測地系）
       - name: lon
         data_type: DOUBLE
-        meta:
-          title: 経度
-          description: 十進度（世界測地系）
