@@ -1,8 +1,8 @@
 ## データ出典
 
-[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）、気象官署の日別観測値・時別観測値（実況値）と、台風の経路（ベストトラック、1951年〜）を収録しています。
+[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）、気象官署の日別観測値・時別観測値（実況値）、台風の経路（ベストトラック、1951年〜）と、さくらの開花日・満開日（生物季節観測、1953年〜）を収録しています。
 
-観測所一覧・地域コード・天気予報は非公式の JSON 配信（気象庁サイトが内部利用しているエンドポイント）を、日別平年値は平年値ダウンロードの配布ファイルを、気象官署の観測所一覧・日別観測値・時別観測値は過去の気象データ検索のページを、台風の経路は RSMC 東京・台風センターのベストトラック配布ファイルを出典として利用しています。
+観測所一覧・地域コード・天気予報は非公式の JSON 配信（気象庁サイトが内部利用しているエンドポイント）を、日別平年値は平年値ダウンロードの配布ファイルを、気象官署の観測所一覧・日別観測値・時別観測値は過去の気象データ検索のページを、台風の経路は RSMC 東京・台風センターのベストトラック配布ファイルを、さくらの開花日・満開日は生物季節観測の累年表のページを出典として利用しています。
 
 - 観測所一覧: https://www.jma.go.jp/bosai/amedas/const/amedastable.json
 - 地域コード: https://www.jma.go.jp/bosai/common/const/area.json
@@ -11,6 +11,7 @@
 - 日別平年値: https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html （normal_amedas_daily）
 - 気象官署の観測所一覧・日別観測値: https://www.data.jma.go.jp/stats/etrn/index.php （過去の気象データ検索）
 - 台風の経路（ベストトラック）: https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/index.html
+- さくらの開花日・満開日（生物季節観測）: https://www.data.jma.go.jp/sakura/data/index.html
 
 ## テーブル: mart_jma_stations
 
@@ -129,6 +130,23 @@
 - wind30_longest_radius_nm / wind30_shortest_radius_nm: 強風域の長径 / 短径（INTEGER、海里。1977年より前は NULL）
 - is_landfall: 上陸・通過（BOOLEAN、この解析時刻から1時間以内に日本の陸地へ上陸または通過したか。1991年以降の台風のみ）
 
+## テーブル: mart_jma_sakura_phenology
+
+生物季節観測によるさくらの開花日と満開日です。1953年以降、気象官署で観測した地点×年×現象（開花 / 満開）ごとに、観測日と平年値（1991〜2020年の平均）からの差を持ちます。block_no で mart_jma_observation_stations と結合できます。観測値のない年は行を持ちません。
+
+観測地点は1990年の100地点から2020年代は57〜58地点に減っています。全国平均を年ごとに取ると地点構成の変化が混ざるので、地点ごとの時系列で比べます。種目は地点によって違い、奄美・沖縄のひかんざくらは前年12月に開花することがあります（その場合 day_of_year は0以下）。
+
+- station_name: 地点名（VARCHAR、気象官署名）
+- block_no: 観測所番号（VARCHAR、気象官署のブロック番号。地点名で mart_jma_observation_stations と対応づけたもの）
+- species: 種目（VARCHAR、そめいよしの / えぞやまざくら / ひかんざくら / ちしまざくら）
+- phenomenon: 現象（VARCHAR、開花 / 満開）
+- year: 観測年（INTEGER）
+- observed_date: 観測日（DATE、前年12月の日付になることがある）
+- day_of_year: 年初からの日数（INTEGER、観測年の1月1日を1とした通日）
+- normal_month / normal_day: 平年値の月 / 日（INTEGER、平年値の無い地点は NULL）
+- days_from_normal: 平年差（INTEGER、日。負なら平年より早い）
+- is_current_station: 現在の観測地点（BOOLEAN、現在も観測を続けている地点か）
+
 ## テーブル: mart_jma_forecast_weather
 
 府県予報区ごとの短期天気予報（今日・明日・明後日）です。一次細分区域（class10）別に、対象日時ごとの天気・風・波を持ちます。area_code で mart_jma_areas（level=class10）と、office_code で mart_jma_areas（level=office）と結合できます。
@@ -147,7 +165,7 @@
 
 ### データ更新手順
 
-main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）、RSMC 東京・台風センターのベストトラック ZIP（80 桁固定長）と、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）・時別値ページ（hourly_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・ベストトラックのヘッダ行（台風の属性）の各解析行への展開・日別観測値の観測所×日への整形・時別観測値の観測所×日時への整形を行って `.queria/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh` で実行する（Queria に公開する）。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で、時別観測値の収録日数は `OBS_HOURLY_DAYS`・対象地点は `MAJOR_STATION_NAMES` で調整する。
+main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）、RSMC 東京・台風センターのベストトラック ZIP（80 桁固定長）、生物季節観測のさくらの開花日・満開日の累年表ページと、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）・時別値ページ（hourly_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・ベストトラックのヘッダ行（台風の属性）の各解析行への展開・日別観測値の観測所×日への整形・時別観測値の観測所×日時への整形・さくらの累年表の地点×年への展開を行って `.queria/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh` で実行する（Queria に公開する）。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で、時別観測値の収録日数は `OBS_HOURLY_DAYS`・対象地点は `MAJOR_STATION_NAMES` で調整する。
 
 ## ライセンス
 

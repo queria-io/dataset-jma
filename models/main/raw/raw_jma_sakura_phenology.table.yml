@@ -1,0 +1,21 @@
+schema: main
+name: raw_jma_sakura_phenology
+description: 気象庁 生物季節観測のさくらの開花日・満開日（累年表）の生データ
+published: false
+fields:
+  - name: phenomenon
+    description: 現象（開花 / 満開）
+  - name: station_name
+    description: 観測地点名（気象官署名）
+  - name: is_current_station
+    description: 現在も観測している地点か（累年表の「*」）
+  - name: species
+    description: 観測した種目（そめいよしの / えぞやまざくら / ひかんざくら / ちしまざくら）
+  - name: year
+    description: 観測年（累年表の年の列）
+  - name: observed_date
+    description: 観測日。累年表で「#」が付いた値は前年12月の日付になる
+  - name: normal_month
+    description: 平年値（1991〜2020年の平均）の月。平年値の無い地点はNULL
+  - name: normal_day
+    description: 平年値の日
