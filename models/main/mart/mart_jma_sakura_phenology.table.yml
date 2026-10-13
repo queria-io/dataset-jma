@@ -1,0 +1,49 @@
+schema: main
+name: mart_jma_sakura_phenology
+title: 気象庁 さくらの開花日・満開日（生物季節観測）
+description: 気象庁の生物季節観測によるさくらの開花日と満開日。1953年以降、全国の気象官署で観測した地点×年の観測日と、平年値（1991〜2020年の平均）からの差を収録する。block_noで mart_jma_observation_stations と結合できる。観測値のない年は行を持たない。
+keywords:
+  - さくら
+  - 桜
+  - 開花日
+  - 満開日
+  - 生物季節観測
+  - 気候変動
+  - 気象庁
+published: true
+sources:
+  - path: https://www.data.jma.go.jp/sakura/data/index.html
+fields:
+  - name: station_name
+    title: 地点名
+    description: 観測した気象官署の地点名
+  - name: block_no
+    title: 観測所番号
+    description: 気象官署のブロック番号。地点名で mart_jma_observation_stations と対応づけたもので、対応する観測所が無い地点はNULL
+  - name: species
+    title: 種目
+    description: 観測した標本木の種類。多くの地点はそめいよしので、北海道の一部はえぞやまざくら・ちしまざくら、奄美・沖縄はひかんざくら。倶知安は1994年までえぞやまざくら、1995〜2006年はそめいよしの
+  - name: phenomenon
+    title: 現象
+    description: 開花 または 満開
+  - name: year
+    title: 観測年
+    description: 累年表上の年。ひかんざくらは前年12月に開花することがあり、その場合も翌年の値として扱われる
+  - name: observed_date
+    title: 観測日
+    description: 開花または満開を観測した日。観測年の前年12月の日付になることがある
+  - name: day_of_year
+    title: 年初からの日数
+    description: 観測年の1月1日を1とした通日。前年12月の観測は0以下になる。年ごとの早まり・遅れの比較に使う
+  - name: normal_month
+    title: 平年値の月
+    description: 平年値（1991〜2020年の平均）の月。現在観測していない地点など、平年値の無い地点はNULL
+  - name: normal_day
+    title: 平年値の日
+    description: 平年値（1991〜2020年の平均）の日
+  - name: days_from_normal
+    title: 平年差
+    description: 観測日から、その年の平年値の日付を引いた日数。負なら平年より早い。平年値の無い地点はNULL
+  - name: is_current_station
+    title: 現在の観測地点
+    description: 現在も観測を続けている地点か。false の地点はどこかの年で観測を終えている

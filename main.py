@@ -2,11 +2,13 @@
 
 非公式 JSON API からマスタ（観測所一覧・地域コード）と府県予報区ごとの短期天気予報を
 取得し、地震月報（カタログ編）の震源データ（96 バイト固定長）と平年値ダウンロードの
-アメダス日別平年値（1991〜2020 年）、台風のベストトラック（1951 年〜）を取得・整形して、
+アメダス日別平年値（1991〜2020 年）、台風のベストトラック（1951 年〜）、
+生物季節観測のさくらの開花日・満開日（1953 年〜）を取得・整形して、
 DuckDB が読みやすい NDJSON に整形して .queria/ に保存してから dbt を実行する。
 """
 
 import calendar
+import html as html_module
 import io
 import json
 import re
@@ -47,6 +49,19 @@ BEST_TRACK_URL = (
 
 # ベストトラックのヘッダ行を示す先頭 5 桁。
 BEST_TRACK_HEADER_INDICATOR = "66666"
+
+# 生物季節観測のさくらの開花日・満開日の累年表。現象ごとに 10 年単位のページ
+# （sakura003_00.html が 1953〜1960 年、以降 _01, _02 … と続き、最新ページが当年まで）に
+# 分かれ、各ページは地点 × 年の固定幅テキスト（pre 要素）で配布される。
+# https://www.data.jma.go.jp/sakura/data/index.html
+SAKURA_BASE_URL = "https://www.data.jma.go.jp/sakura/data"
+SAKURA_PHENOMENA = {
+    "003": "開花",
+    "004": "満開",
+}
+
+# 代替種目の欄が空の地点は「そめいよしの」を観測している。
+SAKURA_DEFAULT_SPECIES = "そめいよしの"
 
 # 府県予報区ごとの天気予報 JSON。area.json の offices（府県予報区）コードを URL に埋める。
 # 各ファイルの先頭要素が短期予報（今日・明日・明後日）で、その timeSeries[0] が
@@ -150,6 +165,7 @@ FORECASTS_PATH = WORK_DIR / "jma_forecasts.ndjson"
 OBS_STATIONS_PATH = WORK_DIR / "jma_observation_stations.ndjson"
 DAILY_OBS_PATH = WORK_DIR / "jma_daily_observations.ndjson"
 HOURLY_OBS_PATH = WORK_DIR / "jma_hourly_observations.ndjson"
+SAKURA_PATH = WORK_DIR / "jma_sakura_phenology.ndjson"
 
 # 気象官署（管区・地方気象台や測候所相当）の観測所種別。
 # amedas のうち type A/B が気象官署に相当する。
@@ -200,6 +216,7 @@ def main() -> None:
     _build_normals_daily()
     _build_hypocenters()
     _build_typhoon_tracks()
+    _build_sakura_phenology()
     _build_forecasts()
     stations = _build_observation_stations()
     _build_daily_observations(stations)
@@ -598,6 +615,85 @@ def _build_typhoon_tracks() -> None:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
                 count += 1
     print(f"  jma_typhoon_tracks.ndjson: {count} points / {typhoons} typhoons")
+
+
+# 累年表の 1 セル。「-」は観測値なし、「月 日」に「#」が付くと前年の観測日。
+_SAKURA_CELL_RE = re.compile(r"-|(\d{1,2})\s+(\d{1,2})(#?)")
+_SAKURA_STATION_RE = re.compile(r"(\S+)\s*(\*?)(.*)$")
+
+
+def _sakura_species(station_name: str, note: str, year: int) -> str | None:
+    """地点の代替種目欄と年から、観測した種目名を返す。"""
+    if note == "（注）":
+        # 倶知安だけは種目が途中で変わっている（ページ末尾の注記による）。
+        if station_name == "倶知安":
+            if year <= 1994:
+                return "えぞやまざくら"
+            if year <= 2006:
+                return SAKURA_DEFAULT_SPECIES
+        return None
+    return note or SAKURA_DEFAULT_SPECIES
+
+
+def _parse_sakura_page(html_text: str) -> list[dict]:
+    """累年表の 1 ページから、地点 × 年の観測日を取り出す（観測値なしの年は含めない）。"""
+    pres = re.findall(r"<pre[^>]*>(.*?)</pre>", html_text, re.S)
+    if not pres:
+        raise RuntimeError("さくらの累年表に pre 要素が見つからない")
+    body = html_module.unescape(re.sub(r"<[^>]+>", "", pres[0]))
+    rows = []
+    years: list[int] | None = None
+    for line in body.splitlines():
+        if line.startswith("地点名"):
+            years = [int(y) for y in re.findall(r"\b(\d{4})\b", line)]
+            continue
+        stripped = line.strip()
+        if years is None or not stripped or stripped.startswith("月"):
+            continue
+        name, star, rest = _SAKURA_STATION_RE.match(stripped).groups()
+        cells = list(_SAKURA_CELL_RE.finditer(rest))
+        # 年の列と平年値の列が揃っていない行はレイアウト変更とみなして止める。
+        if len(cells) < len(years) + 1:
+            raise RuntimeError(f"さくらの累年表の列数が合わない: {line!r}")
+        normal = cells[len(years)]
+        note = rest[normal.end():].strip()
+        for year, cell in zip(years, cells):
+            if cell.group(0) == "-":
+                continue
+            month, day, prev = int(cell.group(1)), int(cell.group(2)), cell.group(3)
+            rows.append({
+                "station_name": name,
+                "is_current_station": star == "*",
+                "species": _sakura_species(name, note, year),
+                "year": year,
+                "observed_date": date(year - 1 if prev else year, month, day).isoformat(),
+                "normal_month": int(normal.group(1)) if normal.group(0) != "-" else None,
+                "normal_day": int(normal.group(2)) if normal.group(0) != "-" else None,
+            })
+    return rows
+
+
+def _build_sakura_phenology() -> None:
+    """さくらの開花日・満開日の累年表を現象ごとに最初のページから順にたどって NDJSON に整形する。"""
+    count = 0
+    seen: set[tuple[str, str, int]] = set()
+    with SAKURA_PATH.open("w", encoding="utf-8") as f:
+        for code, phenomenon in SAKURA_PHENOMENA.items():
+            page = 0
+            while True:
+                html_text = _fetch_text(f"{SAKURA_BASE_URL}/sakura{code}_{page:02d}.html")
+                for row in _parse_sakura_page(html_text):
+                    key = (row["station_name"], phenomenon, row["year"])
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    f.write(json.dumps({"phenomenon": phenomenon, **row}, ensure_ascii=False) + "\n")
+                    count += 1
+                # 次の年代のページへのリンクが無ければ最新ページ。
+                if f'href="sakura{code}_{page + 1:02d}.html"' not in html_text:
+                    break
+                page += 1
+    print(f"  jma_sakura_phenology.ndjson: {count} rows")
 
 
 def _forecast_weather_rows(office_code: str, data: list) -> list[dict]:
