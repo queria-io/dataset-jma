@@ -20,6 +20,7 @@ keywords:
   - 生物季節観測
 homepage: https://github.com/queria-io/dataset-jma
 language: ja
+themes: [land_climate]
 
 licenses:
   - JP-PDL-1.0
