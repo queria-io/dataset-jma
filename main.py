@@ -65,7 +65,8 @@ SAKURA_DEFAULT_SPECIES = "そめいよしの"
 
 # 府県予報区ごとの天気予報 JSON。area.json の offices（府県予報区）コードを URL に埋める。
 # 各ファイルの先頭要素が短期予報（今日・明日・明後日）で、その timeSeries[0] が
-# 一次細分区域（class10）別の天気・風・波。ビルド時点の最新発表を 1 スナップショット取得する。
+# 一次細分区域（class10）別の天気・風・波、timeSeries[1] が class10 別・6 時間ごとの降水確率、
+# timeSeries[2] がアメダス地点別の予想気温。ビルド時点の最新発表を 1 スナップショット取得する。
 # https://www.jma.go.jp/bosai/forecast/
 FORECAST_BASE_URL = "https://www.jma.go.jp/bosai/forecast/data/forecast"
 
@@ -162,6 +163,8 @@ NORMALS_DAILY_PATH = WORK_DIR / "jma_normals_daily.ndjson"
 HYPOCENTERS_PATH = WORK_DIR / "jma_hypocenters.ndjson"
 TYPHOON_TRACKS_PATH = WORK_DIR / "jma_typhoon_tracks.ndjson"
 FORECASTS_PATH = WORK_DIR / "jma_forecasts.ndjson"
+FORECAST_POPS_PATH = WORK_DIR / "jma_forecast_pops.ndjson"
+FORECAST_TEMPS_PATH = WORK_DIR / "jma_forecast_temps.ndjson"
 OBS_STATIONS_PATH = WORK_DIR / "jma_observation_stations.ndjson"
 DAILY_OBS_PATH = WORK_DIR / "jma_daily_observations.ndjson"
 HOURLY_OBS_PATH = WORK_DIR / "jma_hourly_observations.ndjson"
@@ -738,17 +741,58 @@ def _forecast_weather_rows(office_code: str, data: list) -> list[dict]:
     return rows
 
 
-def _build_forecasts() -> None:
-    """府県予報区ごとの短期天気予報を取得し、class10 区域×対象日時の NDJSON に整形する。
+def _forecast_series_rows(
+    office_code: str, data: list, index: int, key: str, value_name: str
+) -> list[dict]:
+    """短期予報の timeSeries[index] を区域×対象日時の行に展開する。
 
-    予報対象の区域は area.json の offices（府県予報区）。区域コードは area.json の
-    class10 と一致し mart_jma_areas と結合できる。ビルド時点の最新発表を取得する。
+    降水確率（index=1, key=pops）は class10 区域、予想気温（index=2, key=temps）は
+    アメダス地点が区域になる。値は文字列のまま残し、空文字は dbt 側で欠損に直す。
+    """
+    if not data:
+        return []
+    short_term = data[0]
+    series = short_term.get("timeSeries") or []
+    if len(series) <= index:
+        return []
+    target = series[index]
+    time_defines = target.get("timeDefines") or []
+    rows = []
+    for area in target.get("areas") or []:
+        area_info = area.get("area") or {}
+        values = area.get(key) or []
+        for i, forecast_datetime in enumerate(time_defines):
+            rows.append(
+                {
+                    "office_code": office_code,
+                    "report_datetime": short_term.get("reportDatetime"),
+                    "area_code": area_info.get("code"),
+                    "area_name": area_info.get("name"),
+                    "forecast_datetime": forecast_datetime,
+                    value_name: values[i] if i < len(values) else None,
+                }
+            )
+    return rows
+
+
+def _build_forecasts() -> None:
+    """府県予報区ごとの短期予報を取得し、天気・降水確率・予想気温の NDJSON に整形する。
+
+    予報対象の区域は area.json の offices（府県予報区）。天気と降水確率の区域コードは
+    area.json の class10 と一致し mart_jma_areas と、予想気温の地点コードはアメダスの
+    観測所番号と一致し mart_jma_stations と結合できる。ビルド時点の最新発表を取得する。
     """
     area = _fetch_json(AREA_URL)
     office_codes = sorted(area.get("offices", {}).keys())
     count = 0
+    pops_count = 0
+    temps_count = 0
     offices = 0
-    with FORECASTS_PATH.open("w", encoding="utf-8") as f:
+    with (
+        FORECASTS_PATH.open("w", encoding="utf-8") as f,
+        FORECAST_POPS_PATH.open("w", encoding="utf-8") as f_pops,
+        FORECAST_TEMPS_PATH.open("w", encoding="utf-8") as f_temps,
+    ):
         for office_code in office_codes:
             url = f"{FORECAST_BASE_URL}/{office_code}.json"
             try:
@@ -761,8 +805,18 @@ def _build_forecasts() -> None:
             for row in rows:
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
             count += len(rows)
+            pops = _forecast_series_rows(office_code, data, 1, "pops", "pop")
+            for row in pops:
+                f_pops.write(json.dumps(row, ensure_ascii=False) + "\n")
+            pops_count += len(pops)
+            temps = _forecast_series_rows(office_code, data, 2, "temps", "temp")
+            for row in temps:
+                f_temps.write(json.dumps(row, ensure_ascii=False) + "\n")
+            temps_count += len(temps)
             offices += 1
     print(f"  jma_forecasts.ndjson: {count} rows / {offices} offices")
+    print(f"  jma_forecast_pops.ndjson: {pops_count} rows")
+    print(f"  jma_forecast_temps.ndjson: {temps_count} rows")
 
 
 _VIEWPOINT_RE = re.compile(
