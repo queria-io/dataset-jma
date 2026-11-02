@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: mart_jma_weekly_forecast_temps
+    description: >-
+      気象庁の府県予報区ごとの週間予報のうち、地点別の予想最低・最高気温と予測範囲、
+      地点の平年値。地点はアメダスの観測所で、station_idでmart_jma_stationsと結合できる。
+      ビルド時点の最新発表（report_datetime）の1スナップショット。
+    access: public
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: office_code
+        data_type: VARCHAR
+      - name: report_datetime
+        data_type: TIMESTAMP WITH TIME ZONE
+      - name: station_id
+        data_type: VARCHAR
+      - name: station_name
+        data_type: VARCHAR
+      - name: forecast_date
+        data_type: DATE
+      - name: temp_min_c
+        data_type: INTEGER
+      - name: temp_min_lower_c
+        data_type: INTEGER
+      - name: temp_min_upper_c
+        data_type: INTEGER
+      - name: temp_max_c
+        data_type: INTEGER
+      - name: temp_max_lower_c
+        data_type: INTEGER
+      - name: temp_max_upper_c
+        data_type: INTEGER
+      - name: normal_temp_min_c
+        data_type: DOUBLE
+      - name: normal_temp_max_c
+        data_type: DOUBLE
+      - name: normal_precip_lower_mm
+        data_type: DOUBLE
+      - name: normal_precip_upper_mm
+        data_type: DOUBLE

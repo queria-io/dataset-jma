@@ -1,0 +1,38 @@
+schema: main
+name: mart_jma_weekly_forecasts
+title: 気象庁 週間天気予報
+description: 気象庁の府県予報区ごとの週間天気予報。7日分の天気・降水確率・信頼度を、週間予報の区域×日ごとに収録する。区域は府県予報区単位か一次細分区域単位で、短期予報（mart_jma_forecast_weather）より粗い。予報期間の初日（短期予報と重なる日）は降水確率がNULLで、信頼度は初日と2日目がNULL。ビルド時点の最新発表（report_datetime）の1スナップショットで、ビルドごとに置き換わる。
+keywords:
+  - 気象
+  - 天気予報
+  - 週間天気予報
+  - 降水確率
+  - 予報区
+  - 気象庁
+published: true
+sources:
+  - path: https://www.jma.go.jp/bosai/forecast/
+fields:
+  - name: office_code
+    title: 府県予報区コード
+    description: 発表元の府県予報区（area.jsonのoffices）。mart_jma_areasのlevel=officeと結合できる
+  - name: report_datetime
+    title: 発表日時
+    description: この予報の発表時刻（JST）
+  - name: area_code
+    title: 区域コード
+    description: 週間予報の区域。多くは府県予報区（level=office）か一次細分区域（level=class10）のコードと一致し、mart_jma_areasと結合できる。一部は週間予報だけの区域コード（例 020200 下北・三八上北）で、mart_jma_areasに無い
+  - name: area_name
+    title: 区域名
+  - name: forecast_date
+    title: 予報対象日
+    description: この予報が対象とする日（JST）
+  - name: weather_code
+    title: 天気コード
+    description: 気象庁の天気予報コード（例 100=晴れ、200=くもり）
+  - name: pop_pct
+    title: 降水確率
+    description: その日の降水確率（%）。予報期間の初日はNULL
+  - name: reliability
+    title: 信頼度
+    description: 降水の有無の予報の信頼度。A（確度が高い）・B（確度がやや高い）・C（確度がやや低い）の3段階。予報期間の初日と2日目はNULL
