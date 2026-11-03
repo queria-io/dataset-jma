@@ -1,0 +1,61 @@
+schema: main
+name: mart_jma_weekly_forecast_temps
+title: 気象庁 週間予報の予想気温
+description: 気象庁の府県予報区ごとの週間予報のうち、地点別の予想最低気温・最高気温とその予測範囲を7日分収録する。地点はアメダスの観測所で、station_idでmart_jma_stationsと結合できる。地点ごとの最低・最高気温の平年値と、7日間合計降水量の平年並の範囲も各行に付く。予報期間の初日（短期予報と重なる日）は予想気温と予測範囲の列がすべてNULL。ビルド時点の最新発表（report_datetime）の1スナップショットで、ビルドごとに置き換わる。
+keywords:
+  - 気象
+  - 天気予報
+  - 週間天気予報
+  - 気温
+  - 最高気温
+  - 最低気温
+  - 平年値
+  - 気象庁
+published: true
+sources:
+  - path: https://www.jma.go.jp/bosai/forecast/
+fields:
+  - name: office_code
+    title: 府県予報区コード
+    description: 発表元の府県予報区（area.jsonのoffices）。mart_jma_areasのlevel=officeと結合できる
+  - name: report_datetime
+    title: 発表日時
+    description: この予報の発表時刻（JST）
+  - name: station_id
+    title: 観測所ID
+    description: アメダス番号（5桁）。mart_jma_stationsと結合できる
+  - name: station_name
+    title: 地点名
+  - name: forecast_date
+    title: 予報対象日
+    description: この予報が対象とする日（JST）
+  - name: temp_min_c
+    title: 予想最低気温
+    description: 予想最低気温（℃）。予報期間の初日はNULL
+  - name: temp_min_lower_c
+    title: 予想最低気温の下限
+    description: 予想最低気温の予測範囲の下端（℃）。予報期間の初日はNULL
+  - name: temp_min_upper_c
+    title: 予想最低気温の上限
+    description: 予想最低気温の予測範囲の上端（℃）。予報期間の初日はNULL
+  - name: temp_max_c
+    title: 予想最高気温
+    description: 予想最高気温（℃）。予報期間の初日はNULL
+  - name: temp_max_lower_c
+    title: 予想最高気温の下限
+    description: 予想最高気温の予測範囲の下端（℃）。予報期間の初日はNULL
+  - name: temp_max_upper_c
+    title: 予想最高気温の上限
+    description: 予想最高気温の予測範囲の上端（℃）。予報期間の初日はNULL
+  - name: normal_temp_min_c
+    title: 最低気温の平年値
+    description: この地点の予報期間の最低気温の平年値（℃）。地点ごとに1つで、日によらず同じ値
+  - name: normal_temp_max_c
+    title: 最高気温の平年値
+    description: この地点の予報期間の最高気温の平年値（℃）。地点ごとに1つで、日によらず同じ値
+  - name: normal_precip_lower_mm
+    title: 降水量の平年並の下限
+    description: この地点の7日間合計降水量の平年並の範囲の下端（mm）。地点ごとに1つで、日によらず同じ値
+  - name: normal_precip_upper_mm
+    title: 降水量の平年並の上限
+    description: この地点の7日間合計降水量の平年並の範囲の上端（mm）。地点ごとに1つで、日によらず同じ値

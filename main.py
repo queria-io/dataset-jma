@@ -66,7 +66,9 @@ SAKURA_DEFAULT_SPECIES = "そめいよしの"
 # 府県予報区ごとの天気予報 JSON。area.json の offices（府県予報区）コードを URL に埋める。
 # 各ファイルの先頭要素が短期予報（今日・明日・明後日）で、その timeSeries[0] が
 # 一次細分区域（class10）別の天気・風・波、timeSeries[1] が class10 別・6 時間ごとの降水確率、
-# timeSeries[2] がアメダス地点別の予想気温。ビルド時点の最新発表を 1 スナップショット取得する。
+# timeSeries[2] がアメダス地点別の予想気温。2 要素目が週間予報（7 日分）で、timeSeries[0] が
+# 週間予報の区域別の天気・降水確率・信頼度、timeSeries[1] がアメダス地点別の最低・最高気温と
+# その予測範囲。ビルド時点の最新発表を 1 スナップショット取得する。
 # https://www.jma.go.jp/bosai/forecast/
 FORECAST_BASE_URL = "https://www.jma.go.jp/bosai/forecast/data/forecast"
 
@@ -165,6 +167,8 @@ TYPHOON_TRACKS_PATH = WORK_DIR / "jma_typhoon_tracks.ndjson"
 FORECASTS_PATH = WORK_DIR / "jma_forecasts.ndjson"
 FORECAST_POPS_PATH = WORK_DIR / "jma_forecast_pops.ndjson"
 FORECAST_TEMPS_PATH = WORK_DIR / "jma_forecast_temps.ndjson"
+WEEKLY_FORECASTS_PATH = WORK_DIR / "jma_weekly_forecasts.ndjson"
+WEEKLY_FORECAST_TEMPS_PATH = WORK_DIR / "jma_weekly_forecast_temps.ndjson"
 OBS_STATIONS_PATH = WORK_DIR / "jma_observation_stations.ndjson"
 DAILY_OBS_PATH = WORK_DIR / "jma_daily_observations.ndjson"
 HOURLY_OBS_PATH = WORK_DIR / "jma_hourly_observations.ndjson"
@@ -221,6 +225,7 @@ def main() -> None:
     _build_typhoon_tracks()
     _build_sakura_phenology()
     _build_forecasts()
+    _build_weekly_forecasts()
     stations = _build_observation_stations()
     _build_daily_observations(stations)
     _build_hourly_observations()
@@ -817,6 +822,125 @@ def _build_forecasts() -> None:
     print(f"  jma_forecasts.ndjson: {count} rows / {offices} offices")
     print(f"  jma_forecast_pops.ndjson: {pops_count} rows")
     print(f"  jma_forecast_temps.ndjson: {temps_count} rows")
+
+
+def _at(values: list, i: int):
+    """配列の i 番目を返す。範囲外は None。"""
+    return values[i] if i < len(values) else None
+
+
+def _weekly_forecast_rows(office_code: str, data: list) -> tuple[list[dict], list[dict]]:
+    """府県予報区の予報 JSON から週間予報の行を取り出す。
+
+    2 要素目が週間予報。timeSeries[0] は週間予報の区域×7 日の天気コード・降水確率・
+    信頼度、timeSeries[1] はアメダス地点×7 日の最低・最高気温と予測範囲（Upper / Lower）。
+    地点ごとの平年値（tempAverage / precipAverage）は気温の行に付ける。
+    予報期間の初日（短期予報と重なる日）は降水確率・気温が、初日と 2 日目は信頼度が空文字になる。
+    初日は発表時刻で変わり、11 時発表は発表日、17 時発表は翌日になる。値は文字列のまま残し、空文字は dbt 側で欠損に直す。
+    """
+    if len(data) < 2:
+        return [], []
+    weekly = data[1]
+    report_datetime = weekly.get("reportDatetime")
+    series = weekly.get("timeSeries") or []
+    if len(series) < 2:
+        return [], []
+
+    weather = series[0]
+    time_defines = weather.get("timeDefines") or []
+    weather_rows = []
+    for area in weather.get("areas") or []:
+        area_info = area.get("area") or {}
+        codes = area.get("weatherCodes") or []
+        pops = area.get("pops") or []
+        reliabilities = area.get("reliabilities") or []
+        for i, forecast_datetime in enumerate(time_defines):
+            weather_rows.append(
+                {
+                    "office_code": office_code,
+                    "report_datetime": report_datetime,
+                    "area_code": area_info.get("code"),
+                    "area_name": area_info.get("name"),
+                    "forecast_datetime": forecast_datetime,
+                    "weather_code": _at(codes, i),
+                    "pop": _at(pops, i),
+                    "reliability": _at(reliabilities, i),
+                }
+            )
+
+    def averages(key: str) -> dict:
+        return {
+            (a.get("area") or {}).get("code"): a
+            for a in (weekly.get(key) or {}).get("areas") or []
+        }
+
+    temp_avg = averages("tempAverage")
+    precip_avg = averages("precipAverage")
+    temps = series[1]
+    time_defines = temps.get("timeDefines") or []
+    temp_rows = []
+    for area in temps.get("areas") or []:
+        area_info = area.get("area") or {}
+        code = area_info.get("code")
+        normal_temp = temp_avg.get(code) or {}
+        normal_precip = precip_avg.get(code) or {}
+        for i, forecast_datetime in enumerate(time_defines):
+            temp_rows.append(
+                {
+                    "office_code": office_code,
+                    "report_datetime": report_datetime,
+                    "station_id": code,
+                    "station_name": area_info.get("name"),
+                    "forecast_datetime": forecast_datetime,
+                    "temp_min": _at(area.get("tempsMin") or [], i),
+                    "temp_min_upper": _at(area.get("tempsMinUpper") or [], i),
+                    "temp_min_lower": _at(area.get("tempsMinLower") or [], i),
+                    "temp_max": _at(area.get("tempsMax") or [], i),
+                    "temp_max_upper": _at(area.get("tempsMaxUpper") or [], i),
+                    "temp_max_lower": _at(area.get("tempsMaxLower") or [], i),
+                    "normal_temp_min": normal_temp.get("min"),
+                    "normal_temp_max": normal_temp.get("max"),
+                    "normal_precip_lower": normal_precip.get("min"),
+                    "normal_precip_upper": normal_precip.get("max"),
+                }
+            )
+    return weather_rows, temp_rows
+
+
+def _build_weekly_forecasts() -> None:
+    """府県予報区ごとの週間予報を取得し、区域×日と地点×日の NDJSON に整形する。
+
+    予報対象の区域は area.json の offices（府県予報区）。区域コードは週間予報の区域で、
+    多くは府県予報区か一次細分区域のコードと一致する。地点コードはアメダスの観測所番号。
+    ビルド時点の最新発表を取得する。
+    """
+    area = _fetch_json(AREA_URL)
+    office_codes = sorted(area.get("offices", {}).keys())
+    weather_count = 0
+    temp_count = 0
+    offices = 0
+    with (
+        WEEKLY_FORECASTS_PATH.open("w", encoding="utf-8") as f_weather,
+        WEEKLY_FORECAST_TEMPS_PATH.open("w", encoding="utf-8") as f_temps,
+    ):
+        for office_code in office_codes:
+            url = f"{FORECAST_BASE_URL}/{office_code}.json"
+            try:
+                data = _fetch_json(url)
+            except urllib.error.HTTPError as exc:
+                # 予報を提供しない区域（例: 別区域に統合済み）は 404 になり得る。
+                print(f"    weekly forecast {office_code}: skip ({exc.code})")
+                continue
+            weather_rows, temp_rows = _weekly_forecast_rows(office_code, data)
+            for row in weather_rows:
+                f_weather.write(json.dumps(row, ensure_ascii=False) + "\n")
+            for row in temp_rows:
+                f_temps.write(json.dumps(row, ensure_ascii=False) + "\n")
+            weather_count += len(weather_rows)
+            temp_count += len(temp_rows)
+            offices += 1
+    print(f"  jma_weekly_forecasts.ndjson: {weather_count} rows / {offices} offices")
+    print(f"  jma_weekly_forecast_temps.ndjson: {temp_count} rows")
 
 
 _VIEWPOINT_RE = re.compile(

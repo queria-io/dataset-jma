@@ -177,6 +177,16 @@ models:
 
   - name: raw_jma_forecast_temps
     description: 府県予報区ごとの短期予報の予想気温（forecast JSONをアメダス地点×対象日時に展開したもの）の生データ
+        description: 一次細分区域コード（class10）
+      - name: area_name
+        description: 一次細分区域名
+      - name: forecast_datetime
+        description: 6時間の区切りの開始日時（ISO8601文字列、日本標準時）
+      - name: pop
+        description: 降水確率（%、文字列。空文字は値なし）
+
+  - name: raw_jma_forecast_temps
+    description: 府県予報区ごとの短期予報の予想気温（forecast JSONをアメダス地点×対象日時に展開したもの）の生データ
     columns:
       - name: office_code
         description: 府県予報区コード（area.jsonのoffices）
@@ -190,6 +200,60 @@ models:
         description: 予報対象日時（ISO8601文字列、日本標準時）
       - name: temp
         description: 予想気温（℃、文字列。空文字は値なし）
+
+  - name: raw_jma_weekly_forecasts
+    description: 府県予報区ごとの週間天気予報（forecast JSONの2要素目を週間予報の区域×日に展開したもの）の生データ
+    columns:
+      - name: office_code
+        description: 府県予報区コード（area.jsonのoffices）
+      - name: report_datetime
+        description: 発表日時（ISO8601文字列、日本標準時）
+      - name: area_code
+        description: 週間予報の区域コード
+      - name: area_name
+        description: 週間予報の区域名
+      - name: forecast_datetime
+        description: 予報対象日（ISO8601文字列、日本標準時の0時）
+      - name: weather_code
+        description: 天気予報コード
+      - name: pop
+        description: 日ごとの降水確率（%、予報期間の初日は空文字）
+      - name: reliability
+        description: 予報の信頼度（A/B/C、予報期間の初日と2日目は空文字）
+
+  - name: raw_jma_weekly_forecast_temps
+    description: 府県予報区ごとの週間予報の予想気温（forecast JSONの2要素目をアメダス地点×日に展開したもの）の生データ
+    columns:
+      - name: office_code
+        description: 府県予報区コード（area.jsonのoffices）
+      - name: report_datetime
+        description: 発表日時（ISO8601文字列、日本標準時）
+      - name: station_id
+        description: 観測所ID（アメダス番号、5桁）
+      - name: station_name
+        description: 地点名
+      - name: forecast_datetime
+        description: 予報対象日（ISO8601文字列、日本標準時の0時）
+      - name: temp_min
+        description: 予想最低気温（℃、予報期間の初日は空文字）
+      - name: temp_min_upper
+        description: 予想最低気温の予測範囲の上端（℃）。予報期間の初日はNULL
+      - name: temp_min_lower
+        description: 予想最低気温の予測範囲の下端（℃）。予報期間の初日はNULL
+      - name: temp_max
+        description: 予想最高気温（℃、予報期間の初日は空文字）
+      - name: temp_max_upper
+        description: 予想最高気温の予測範囲の上端（℃）。予報期間の初日はNULL
+      - name: temp_max_lower
+        description: 予想最高気温の予測範囲の下端（℃）。予報期間の初日はNULL
+      - name: normal_temp_min
+        description: 最低気温の平年値（℃、tempAverageのmin）
+      - name: normal_temp_max
+        description: 最高気温の平年値（℃、tempAverageのmax）
+      - name: normal_precip_lower
+        description: 7日間合計降水量の平年並の範囲の下端（mm、precipAverageのmin）
+      - name: normal_precip_upper
+        description: 7日間合計降水量の平年並の範囲の上端（mm、precipAverageのmax）
 
   - name: raw_jma_observation_stations
     description: 気象官署の観測所レジストリ（過去の気象データ検索の観測所選択ページ）の生データ
