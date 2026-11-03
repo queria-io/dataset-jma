@@ -1,0 +1,35 @@
+schema: main
+name: raw_jma_weekly_forecast_temps
+description: 府県予報区ごとの週間予報の予想気温（forecast JSONの2要素目をアメダス地点×日に展開したもの）の生データ
+published: false
+fields:
+  - name: office_code
+    description: 府県予報区コード（area.jsonのoffices）
+  - name: report_datetime
+    description: 発表日時（ISO8601文字列、日本標準時）
+  - name: station_id
+    description: 観測所ID（アメダス番号、5桁）
+  - name: station_name
+    description: 地点名
+  - name: forecast_datetime
+    description: 予報対象日（ISO8601文字列、日本標準時の0時）
+  - name: temp_min
+    description: 予想最低気温（℃、予報期間の初日は空文字）
+  - name: temp_min_upper
+    description: 予想最低気温の予測範囲の上端（℃）。予報期間の初日はNULL
+  - name: temp_min_lower
+    description: 予想最低気温の予測範囲の下端（℃）。予報期間の初日はNULL
+  - name: temp_max
+    description: 予想最高気温（℃、予報期間の初日は空文字）
+  - name: temp_max_upper
+    description: 予想最高気温の予測範囲の上端（℃）。予報期間の初日はNULL
+  - name: temp_max_lower
+    description: 予想最高気温の予測範囲の下端（℃）。予報期間の初日はNULL
+  - name: normal_temp_min
+    description: 最低気温の平年値（℃、tempAverageのmin）
+  - name: normal_temp_max
+    description: 最高気温の平年値（℃、tempAverageのmax）
+  - name: normal_precip_lower
+    description: 7日間合計降水量の平年並の範囲の下端（mm、precipAverageのmin）
+  - name: normal_precip_upper
+    description: 7日間合計降水量の平年並の範囲の上端（mm、precipAverageのmax）

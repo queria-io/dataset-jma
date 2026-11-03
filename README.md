@@ -1,6 +1,6 @@
 ## データ出典
 
-[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）、気象官署の日別観測値・時別観測値（実況値）、台風の経路（ベストトラック、1951年〜）と、さくらの開花日・満開日（生物季節観測、1953年〜）を収録しています。
+[気象庁](https://www.jma.go.jp/)が公開している気象・地震データです。観測所一覧（アメダス）・予報区の地域コード、府県予報区ごとの短期天気予報・週間天気予報、地震月報（カタログ編）の震源データ、アメダス観測所の日別平年値（1991〜2020年）、気象官署の日別観測値・時別観測値（実況値）、台風の経路（ベストトラック、1951年〜）と、さくらの開花日・満開日（生物季節観測、1953年〜）を収録しています。
 
 観測所一覧・地域コード・天気予報は非公式の JSON 配信（気象庁サイトが内部利用しているエンドポイント）を、日別平年値は平年値ダウンロードの配布ファイルを、気象官署の観測所一覧・日別観測値・時別観測値は過去の気象データ検索のページを、台風の経路は RSMC 東京・台風センターのベストトラック配布ファイルを、さくらの開花日・満開日は生物季節観測の累年表のページを出典として利用しています。
 
@@ -163,9 +163,39 @@
 - wind: 風の予報文（VARCHAR）
 - wave: 波の予報文（VARCHAR、内陸の区域は NULL）
 
+## テーブル: mart_jma_weekly_forecasts
+
+府県予報区ごとの週間天気予報です。7 日分の天気・降水確率・信頼度を、週間予報の区域×日ごとに持ちます。区域は府県予報区単位か一次細分区域単位で、短期予報より粗くなります。
+
+area_code の多くは府県予報区（level=office）か一次細分区域（level=class10）のコードと一致し、mart_jma_areas と結合できます。一部は週間予報だけの区域コード（例 020200 下北・三八上北）で、mart_jma_areas にはありません。短期予報と同じく、ビルド時点の最新発表の 1 スナップショットです。
+
+- office_code: 府県予報区コード（VARCHAR、発表元。area.json の offices）
+- report_datetime: 発表日時（TIMESTAMP WITH TIME ZONE、日本標準時）
+- area_code: 区域コード（VARCHAR、週間予報の区域）
+- area_name: 区域名（VARCHAR）
+- forecast_date: 予報対象日（DATE、日本標準時）
+- weather_code: 天気予報コード（VARCHAR、例 100:晴れ 200:くもり）
+- pop_pct: 降水確率（INTEGER、%。予報期間の初日は NULL）
+- reliability: 信頼度（VARCHAR、A:確度が高い B:確度がやや高い C:確度がやや低い。予報期間の初日と 2 日目は NULL）
+
+## テーブル: mart_jma_weekly_forecast_temps
+
+週間予報のうち、地点別の予想最低気温・最高気温とその予測範囲です。地点はアメダスの観測所で、station_id で mart_jma_stations と結合できます。地点ごとの平年値（最低・最高気温と、7 日間合計降水量の平年並の範囲）も各行に付けています。ビルド時点の最新発表の 1 スナップショットです。
+
+- office_code: 府県予報区コード（VARCHAR、発表元。area.json の offices）
+- report_datetime: 発表日時（TIMESTAMP WITH TIME ZONE、日本標準時）
+- station_id: 観測所ID（VARCHAR、アメダス番号5桁）
+- station_name: 地点名（VARCHAR）
+- forecast_date: 予報対象日（DATE、日本標準時）
+- temp_min_c / temp_max_c: 予想最低気温 / 予想最高気温（INTEGER、℃。予報期間の初日は NULL）
+- temp_min_lower_c / temp_min_upper_c: 予想最低気温の予測範囲の下端 / 上端（INTEGER、℃。予報期間の初日は NULL）
+- temp_max_lower_c / temp_max_upper_c: 予想最高気温の予測範囲の下端 / 上端（INTEGER、℃。予報期間の初日は NULL）
+- normal_temp_min_c / normal_temp_max_c: 最低気温 / 最高気温の平年値（DOUBLE、℃。地点ごとに 1 つ）
+- normal_precip_lower_mm / normal_precip_upper_mm: 7 日間合計降水量の平年並の範囲の下端 / 上端（DOUBLE、mm。地点ごとに 1 つ）
+
 ### データ更新手順
 
-main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）、RSMC 東京・台風センターのベストトラック ZIP（80 桁固定長）、生物季節観測のさくらの開花日・満開日の累年表ページと、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）・時別値ページ（hourly_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・ベストトラックのヘッダ行（台風の属性）の各解析行への展開・日別観測値の観測所×日への整形・時別観測値の観測所×日時への整形・さくらの累年表の地点×年への展開を行って `.queria/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh` で実行する（Queria に公開する）。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で、時別観測値の収録日数は `OBS_HOURLY_DAYS`・対象地点は `MAJOR_STATION_NAMES` で調整する。
+main.py が気象庁の JSON（amedastable.json / area.json / 府県予報区ごとの forecast）、地震月報（カタログ編）の年別震源 ZIP（96 バイト固定長）、平年値ダウンロードの日別平年値 ZIP（normal_amedas_daily）、RSMC 東京・台風センターのベストトラック ZIP（80 桁固定長）、生物季節観測のさくらの開花日・満開日の累年表ページと、過去の気象データ検索の観測所選択ページ・気象官署の日別値ページ（daily_s1.php）・時別値ページ（hourly_s1.php）を取得し、緯度経度の十進度化・地域階層のフラット化・天気予報の区域×対象日時への展開・週間予報の区域×日と地点×日への展開・震源レコードの解析・日別平年値の観測所×月日への展開と実単位へのスケール・ベストトラックのヘッダ行（台風の属性）の各解析行への展開・日別観測値の観測所×日への整形・時別観測値の観測所×日時への整形・さくらの累年表の地点×年への展開を行って `.queria/` に NDJSON として保存し、dbt build でテーブルを再生成する。ビルドは `bash scripts/build.sh` で実行する（Queria に公開する）。震源データの収録年は main.py の `HYPOCENTER_YEARS` で、日別観測値の収録月数は `OBS_MONTHS` で、時別観測値の収録日数は `OBS_HOURLY_DAYS`・対象地点は `MAJOR_STATION_NAMES` で調整する。
 
 ## ライセンス
 
