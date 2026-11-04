@@ -1,0 +1,17 @@
+schema: main
+name: raw_jma_forecast_pops
+description: 府県予報区ごとの短期予報の降水確率（forecast JSONをclass10区域×6時間ごとの時点に展開したもの）の生データ
+published: false
+fields:
+  - name: office_code
+    description: 府県予報区コード（area.jsonのoffices）
+  - name: report_datetime
+    description: 発表日時（ISO8601文字列、日本標準時）
+  - name: area_code
+    description: 一次細分区域コード（class10）
+  - name: area_name
+    description: 一次細分区域名
+  - name: forecast_datetime
+    description: 6時間の区切りの開始日時（ISO8601文字列、日本標準時）
+  - name: pop
+    description: 降水確率（%、文字列。空文字は値なし）

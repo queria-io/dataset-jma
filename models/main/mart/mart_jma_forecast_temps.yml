@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: mart_jma_forecast_temps
+    description: >-
+      気象庁の府県予報区ごとの短期予報のうち、地点別の予想気温。地点はアメダスの観測所で、
+      station_idでmart_jma_stationsと結合できる。ビルド時点の最新発表（report_datetime）の
+      1スナップショット。
+    access: public
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: office_code
+        data_type: VARCHAR
+      - name: report_datetime
+        data_type: TIMESTAMP WITH TIME ZONE
+      - name: station_id
+        data_type: VARCHAR
+      - name: station_name
+        data_type: VARCHAR
+      - name: forecast_datetime
+        data_type: TIMESTAMP WITH TIME ZONE
+      - name: temp_c
+        data_type: INTEGER

@@ -1,0 +1,17 @@
+schema: main
+name: raw_jma_forecast_temps
+description: 府県予報区ごとの短期予報の予想気温（forecast JSONをアメダス地点×対象日時に展開したもの）の生データ
+published: false
+fields:
+  - name: office_code
+    description: 府県予報区コード（area.jsonのoffices）
+  - name: report_datetime
+    description: 発表日時（ISO8601文字列、日本標準時）
+  - name: area_code
+    description: 地点コード（アメダスの観測所番号、5桁）
+  - name: area_name
+    description: 地点名
+  - name: forecast_datetime
+    description: 予報対象日時（ISO8601文字列、日本標準時）
+  - name: temp
+    description: 予想気温（℃、文字列。空文字は値なし）
