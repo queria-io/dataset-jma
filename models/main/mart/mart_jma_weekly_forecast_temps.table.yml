@@ -1,7 +1,11 @@
 schema: main
 name: mart_jma_weekly_forecast_temps
 title: 気象庁 週間予報の予想気温
-description: 気象庁の府県予報区ごとの週間予報のうち、地点別の予想最低気温・最高気温とその予測範囲を7日分収録する。地点はアメダスの観測所で、station_idでmart_jma_stationsと結合できる。地点ごとの最低・最高気温の平年値と、7日間合計降水量の平年並の範囲も各行に付く。予報期間の初日（短期予報と重なる日）は予想気温と予測範囲の列がすべてNULL。ビルド時点の最新発表（report_datetime）の1スナップショットで、ビルドごとに置き換わる。
+description: |-
+  週間予報の地点別の予想最低気温・最高気温と予測範囲（7 日分）です。平年値と 7 日間合計降水量の平年並の範囲も持ちます。
+
+  - 初日の予想気温と予測範囲は NULL です
+  - ビルド時点の最新の発表だけを持ち、ビルドごとに置き換わります
 keywords:
   - 気象
   - 天気予報
@@ -17,7 +21,7 @@ sources:
 fields:
   - name: office_code
     title: 府県予報区コード
-    description: 発表元の府県予報区（area.jsonのoffices）。mart_jma_areasのlevel=officeと結合できる
+    description: 発表元の府県予報区のコード。mart_jma_areas の level=office と結合できる
   - name: report_datetime
     title: 発表日時
     description: この予報の発表時刻（JST）

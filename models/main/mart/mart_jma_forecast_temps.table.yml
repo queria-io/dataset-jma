@@ -1,7 +1,11 @@
 schema: main
 name: mart_jma_forecast_temps
 title: 気象庁 予想気温（短期予報）
-description: 気象庁の府県予報区ごとの短期予報のうち、地点別の予想気温。地点はアメダスの観測所で、station_idでmart_jma_stationsと結合できる。発表ごとに2時点前後の値を持ち、17時発表では翌日の0時が朝の最低気温、9時が日中の最高気温に当たる。ビルド時点の最新発表（report_datetime）の1スナップショットで、ビルドごとに置き換わる。
+description: |-
+  府県予報区ごとの短期予報の地点別の予想気温です。地点はアメダスの観測所です。
+
+  - 17 時の発表では、翌日 0 時の値が朝の最低気温、9 時の値が日中の最高気温です
+  - ビルド時点の最新の発表だけを持ち、ビルドごとに置き換わります
 keywords:
   - 気象
   - 天気予報
@@ -15,7 +19,7 @@ sources:
 fields:
   - name: office_code
     title: 府県予報区コード
-    description: 発表元の府県予報区（area.jsonのoffices）。mart_jma_areasのlevel=officeと結合できる
+    description: 発表元の府県予報区のコード。mart_jma_areas の level=office と結合できる
   - name: report_datetime
     title: 発表日時
     description: この予報の発表時刻（JST）

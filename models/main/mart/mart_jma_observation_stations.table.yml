@@ -1,8 +1,10 @@
 schema: main
 name: mart_jma_observation_stations
 title: 気象庁 観測所（気象官署）
-description: 日別観測値（mart_jma_daily_observations）を観測している気象官署の一覧。 block_noで日別観測値と結合できる。地点名・カナ・緯度経度を持ち、位置での
-  空間分析にも使える。気象官署はアメダス観測所一覧（mart_jma_stations）とは 別の観測所番号体系（ブロック番号）のため、地点名で対応づける。
+description: |-
+  日別・時別の観測値を観測している気象官署の一覧です。ブロック番号・地点名・緯度経度を持ちます。
+
+  - アメダス観測所（mart_jma_stations）とは番号の体系が違います。両者は地点名で対応づけてください
 keywords:
   - 気象
   - 観測所
