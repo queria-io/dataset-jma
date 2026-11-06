@@ -1,7 +1,10 @@
 schema: main
 name: mart_jma_forecast_pops
 title: 気象庁 降水確率（短期予報）
-description: 気象庁の府県予報区ごとの短期予報のうち、一次細分区域（class10）別・6時間ごとの降水確率。発表時刻から翌日までの区切りを対象日時ごとに収録する。area_codeでmart_jma_areas（level=class10）やmart_jma_forecast_weatherと結合できる。ビルド時点の最新発表（report_datetime）の1スナップショットで、ビルドごとに置き換わる。
+description: |-
+  府県予報区ごとの短期予報の降水確率です。一次細分区域ごと・6 時間ごとの値を持ちます。
+
+  - ビルド時点の最新の発表だけを持ち、ビルドごとに置き換わります
 keywords:
   - 気象
   - 天気予報
@@ -14,7 +17,7 @@ sources:
 fields:
   - name: office_code
     title: 府県予報区コード
-    description: 発表元の府県予報区（area.jsonのoffices）。mart_jma_areasのlevel=officeと結合できる
+    description: 発表元の府県予報区のコード。mart_jma_areas の level=office と結合できる
   - name: report_datetime
     title: 発表日時
     description: この予報の発表時刻（JST）

@@ -1,7 +1,11 @@
 schema: main
 name: mart_jma_weekly_forecasts
 title: 気象庁 週間天気予報
-description: 気象庁の府県予報区ごとの週間天気予報。7日分の天気・降水確率・信頼度を、週間予報の区域×日ごとに収録する。区域は府県予報区単位か一次細分区域単位で、短期予報（mart_jma_forecast_weather）より粗い。予報期間の初日（短期予報と重なる日）は降水確率がNULLで、信頼度は初日と2日目がNULL。ビルド時点の最新発表（report_datetime）の1スナップショットで、ビルドごとに置き換わる。
+description: |-
+  府県予報区ごとの週間天気予報です。7 日分の天気・降水確率・信頼度を区域 × 日ごとに持ちます。
+
+  - 初日の降水確率と、初日・2 日目の信頼度は NULL です
+  - ビルド時点の最新の発表だけを持ち、ビルドごとに置き換わります
 keywords:
   - 気象
   - 天気予報
@@ -15,7 +19,7 @@ sources:
 fields:
   - name: office_code
     title: 府県予報区コード
-    description: 発表元の府県予報区（area.jsonのoffices）。mart_jma_areasのlevel=officeと結合できる
+    description: 発表元の府県予報区のコード。mart_jma_areas の level=office と結合できる
   - name: report_datetime
     title: 発表日時
     description: この予報の発表時刻（JST）
