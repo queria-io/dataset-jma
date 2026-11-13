@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_weekly_forecasts
 description: 府県予報区ごとの週間天気予報（forecast JSONの2要素目を週間予報の区域×日に展開したもの）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: office_code
     description: 府県予報区コード（area.jsonのoffices）

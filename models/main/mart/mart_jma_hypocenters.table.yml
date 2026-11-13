@@ -8,7 +8,6 @@ keywords:
   - 震源
   - マグニチュード
   - 気象庁
-published: true
 sources:
   - path: https://www.data.jma.go.jp/eqev/data/bulletin/hypo.html
 fields:

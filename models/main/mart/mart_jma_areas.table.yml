@@ -8,7 +8,6 @@ keywords:
   - 地域コード
   - 予報区
   - 気象庁
-published: true
 sources:
   - path: https://www.jma.go.jp/bosai/common/const/area.json
 fields:

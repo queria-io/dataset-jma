@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_areas
 description: 気象庁の地域コード（area.json）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: area_code
     description: 地域コード

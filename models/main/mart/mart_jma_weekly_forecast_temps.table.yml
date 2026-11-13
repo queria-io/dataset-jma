@@ -15,7 +15,6 @@ keywords:
   - 最低気温
   - 平年値
   - 気象庁
-published: true
 sources:
   - path: https://www.jma.go.jp/bosai/forecast/
 fields:

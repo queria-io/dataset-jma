@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_observation_stations
 description: 気象官署の観測所レジストリ（過去の気象データ検索の観測所選択ページ）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: block_no
     description: 観測所番号（気象官署、5桁のブロック番号）

@@ -14,7 +14,6 @@ keywords:
   - 生物季節観測
   - 気候変動
   - 気象庁
-published: true
 sources:
   - path: https://www.data.jma.go.jp/sakura/data/index.html
 fields:

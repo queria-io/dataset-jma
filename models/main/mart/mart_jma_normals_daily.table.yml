@@ -12,7 +12,6 @@ keywords:
   - 降水量
   - アメダス
   - 気象庁
-published: true
 sources:
   - path: https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html
 fields:

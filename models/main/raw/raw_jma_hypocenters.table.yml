@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_hypocenters
 description: 気象庁 地震月報（カタログ編）の震源データの生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: record_type
     description: レコード種別（J:気象庁 / U:USGS / I:その他国際機関）

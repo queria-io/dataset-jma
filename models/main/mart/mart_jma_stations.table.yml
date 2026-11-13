@@ -8,7 +8,6 @@ keywords:
   - 観測所
   - アメダス
   - 気象庁
-published: true
 sources:
   - path: https://www.jma.go.jp/bosai/amedas/
 fields:
