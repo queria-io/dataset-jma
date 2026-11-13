@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_forecast_pops
 description: 府県予報区ごとの短期予報の降水確率（forecast JSONをclass10区域×6時間ごとの時点に展開したもの）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: office_code
     description: 府県予報区コード（area.jsonのoffices）

@@ -15,7 +15,6 @@ keywords:
   - 積雪
   - 気象官署
   - 気象庁
-published: true
 sources:
   - path: https://www.data.jma.go.jp/stats/etrn/index.php
 fields:

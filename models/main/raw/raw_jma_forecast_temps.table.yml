@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_forecast_temps
 description: 府県予報区ごとの短期予報の予想気温（forecast JSONをアメダス地点×対象日時に展開したもの）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: office_code
     description: 府県予報区コード（area.jsonのoffices）

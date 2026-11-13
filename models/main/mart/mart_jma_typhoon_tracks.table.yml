@@ -12,7 +12,6 @@ keywords:
   - 最大風速
   - 暴風域
   - 気象庁
-published: true
 sources:
   - path: https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/index.html
 fields:

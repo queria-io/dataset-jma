@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_hourly_observations
 description: 気象官署の時別観測値（過去の気象データ検索の時別値ページ hourly_s1.php）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: block_no
     description: 観測所番号（気象官署、5桁のブロック番号）

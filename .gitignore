@@ -17,3 +17,6 @@ package-lock.yml
 # Environment
 .env
 dist/
+
+# fdl checkout の作業カタログ
+.fdl/

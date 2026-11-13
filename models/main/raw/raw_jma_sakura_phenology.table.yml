@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_sakura_phenology
 description: 気象庁 生物季節観測のさくらの開花日・満開日（累年表）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: phenomenon
     description: 現象（開花 / 満開）

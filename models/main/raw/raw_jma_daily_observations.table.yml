@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_daily_observations
 description: 気象官署の日別観測値（過去の気象データ検索の日別値ページ daily_s1.php）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: block_no
     description: 観測所番号（気象官署、5桁のブロック番号）

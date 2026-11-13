@@ -13,7 +13,6 @@ keywords:
   - 最高気温
   - 最低気温
   - 気象庁
-published: true
 sources:
   - path: https://www.jma.go.jp/bosai/forecast/
 fields:

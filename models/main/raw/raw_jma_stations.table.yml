@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_stations
 description: 気象庁アメダス観測所一覧（amedastable.json）の生データ
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: station_id
     description: 観測所ID（アメダス番号、5桁）

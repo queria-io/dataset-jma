@@ -1,7 +1,7 @@
 schema: main
 name: raw_jma_normals_daily
 description: アメダス日別平年値（1991〜2020年）の生データ。観測所×月日の1行
-published: false
+annotations: { queria: { published: false } }
 fields:
   - name: station_id
     description: 観測所番号（アメダス番号、5桁）
