@@ -8,7 +8,7 @@ with stations as (
             when '南大東（南大東島）' then '南大東島'
             else station_name
         end as station_name
-    from {{ ref('raw_jma_observation_stations') }}
+    from {{ ref('stg_jma_observation_stations') }}
 )
 
 select
@@ -24,6 +24,6 @@ select
     date_diff('day', make_date(p.year, p.normal_month, p.normal_day), p.observed_date)::integer
         as days_from_normal,
     p.is_current_station
-from {{ ref('raw_jma_sakura_phenology') }} as p
+from {{ ref('stg_jma_sakura_phenology') }} as p
 left join stations as s
     on p.station_name = s.station_name

@@ -7,4 +7,4 @@ select
     area_name as station_name,
     forecast_datetime::timestamptz as forecast_datetime,
     try_cast(nullif(temp, '') as integer) as temp_c
-from {{ ref('raw_jma_forecast_temps') }}
+from {{ ref('stg_jma_forecast_temps') }}

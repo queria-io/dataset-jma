@@ -2,7 +2,6 @@ version: 2
 
 models:
   - name: mart_jma_sakura_phenology
-    description: 気象庁の生物季節観測によるさくらの開花日と満開日。1953年以降、全国の気象官署で観測した地点×年の観測日と、平年値（1991〜2020年の平均）からの差を収録する。
     access: public
     config:
       contract:

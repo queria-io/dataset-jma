@@ -1,0 +1,81 @@
+$schema: https://tabledoc.queria.io/schemas/dataset/v1.json
+name: jma
+title: 気象庁 気象データ
+description: |-
+  気象庁の観測所と予報区のマスタ、短期・週間の天気予報、気象官署の日別・時別の観測値、アメダスの日別平年値、地震の震源、台風の経路（1951 年〜）、さくらの開花日・満開日（1953 年〜）です。
+
+  出典：気象庁（気象庁ホームページ利用規約に準拠）。
+image: cover.png
+topics:
+  - 気象
+  - 気温
+  - 降水量
+  - 観測所
+  - アメダス
+  - 天気予報
+  - 降水確率
+  - 週間天気予報
+  - 地震
+  - 震源
+  - マグニチュード
+  - 平年値
+  - 台風
+  - 経路
+  - さくら
+  - 開花日
+  - 生物季節観測
+synonyms:
+  - 気象庁
+  - アメダス
+  - 平年値
+  - 震源
+  - 天気予報
+  - 気温
+  - 降水量
+  - 台風
+  - ベストトラック
+  - 桜
+  - 開花
+  - 生物季節
+language: ja
+licenses:
+  - JP-PDL-1.0
+sources:
+  - id: jma
+    title: 気象庁
+    url: https://www.jma.go.jp/
+  - id: etrn
+    title: 過去の気象データ検索
+    url: https://www.data.jma.go.jp/stats/etrn/index.php
+  - id: hypo
+    title: 地震月報（カタログ編）
+    url: https://www.data.jma.go.jp/eqev/data/bulletin/hypo.html
+  - id: Besttracks
+    title: RSMC 東京・台風センター ベストトラック
+    url: https://www.jma.go.jp/jma/jma-eng/jma-center/rsmc-hp-pub-eg/Besttracks/index.html
+  - id: data
+    title: 生物季節観測の情報
+    url: https://www.data.jma.go.jp/sakura/data/index.html
+  - id: area
+    url: https://www.jma.go.jp/bosai/common/const/area.json
+  - id: forecast
+    url: https://www.jma.go.jp/bosai/forecast/
+  - id: normal
+    url: https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html
+  - id: amedas
+    url: https://www.jma.go.jp/bosai/amedas/
+contributors:
+  - id: jma
+    title: 気象庁
+    url: https://www.jma.go.jp/
+    roles:
+      - rightsHolder
+temporal_coverage:
+  start: '1951'
+  end:
+spatial_coverage:
+  - JP
+update_frequency: monthly
+schemas:
+  - name: main
+    title: メイン

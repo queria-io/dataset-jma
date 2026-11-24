@@ -1,0 +1,34 @@
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
+title: 気象庁 予想気温（短期予報）
+description: |-
+  府県予報区ごとの短期予報の地点別の予想気温です。地点はアメダスの観測所です。
+
+  - 17 時の発表では、翌日 0 時の値が朝の最低気温、9 時の値が日中の最高気温です
+  - ビルド時点の最新の発表だけを持ち、ビルドごとに置き換わります
+topics:
+  - 気象
+  - 天気予報
+  - 気温
+  - 最高気温
+  - 最低気温
+  - 気象庁
+sources:
+  - forecast
+columns:
+  - name: office_code
+    title: 府県予報区コード
+    description: 発表元の府県予報区のコード。mart_jma_areas の level=office と結合できる
+  - name: report_datetime
+    title: 発表日時
+    description: この予報の発表時刻（JST）
+  - name: station_id
+    title: 観測所ID
+    description: アメダス番号（5桁）。mart_jma_stationsと結合できる
+  - name: station_name
+    title: 地点名
+  - name: forecast_datetime
+    title: 予報対象日時
+    description: この気温が対象とする日時（JST）
+  - name: temp_c
+    title: 予想気温
+    description: 予想気温（℃）。値の無い時点はNULL

@@ -1,0 +1,29 @@
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
+title: 気象庁 地域コード
+description: 気象庁の予報区の地域コードの階層マスタです。地方・府県予報区・一次細分区域・市町村等のコード・階層・名称・所管気象台・親コードを持ちます。
+topics:
+  - 気象
+  - 地域コード
+  - 予報区
+  - 気象庁
+sources:
+  - area
+columns:
+  - name: area_code
+    title: 地域コード
+  - name: level
+    title: 階層
+    description: center / office / class10 / class15 / class20
+  - name: name
+    title: 地域名
+  - name: name_en
+    title: 地域名（英語）
+  - name: name_kana
+    title: 地域名（カナ）
+    description: class20（市区町村）のみ
+  - name: office_name
+    title: 担当気象台名
+    description: center / office のみ
+  - name: parent_code
+    title: 親地域コード
+    description: 上位階層のコード（centerはNULL）

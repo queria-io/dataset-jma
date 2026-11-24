@@ -2,11 +2,6 @@ version: 2
 
 models:
   - name: mart_jma_observation_stations
-    description: >-
-      日別観測値（mart_jma_daily_observations）を観測している気象官署の一覧。
-      block_noで日別観測値と結合できる。地点名・カナ・緯度経度を持ち、位置での
-      空間分析にも使える。気象官署はアメダス観測所一覧（mart_jma_stations）とは
-      別の観測所番号体系（ブロック番号）のため、地点名で対応づける。
     access: public
     config:
       contract:

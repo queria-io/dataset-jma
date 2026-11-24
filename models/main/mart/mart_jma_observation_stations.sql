@@ -7,4 +7,4 @@ select
     station_kana,
     lat,
     lon
-from {{ ref('raw_jma_observation_stations') }}
+from {{ ref('stg_jma_observation_stations') }}

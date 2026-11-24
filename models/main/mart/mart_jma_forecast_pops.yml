@@ -2,10 +2,6 @@ version: 2
 
 models:
   - name: mart_jma_forecast_pops
-    description: >-
-      気象庁の府県予報区ごとの短期予報のうち、一次細分区域（class10）別・6時間ごとの
-      降水確率。area_codeでmart_jma_areas（level=class10）やmart_jma_forecast_weatherと
-      結合できる。ビルド時点の最新発表（report_datetime）の1スナップショット。
     access: public
     config:
       contract:

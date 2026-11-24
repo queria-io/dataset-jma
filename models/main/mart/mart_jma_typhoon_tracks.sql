@@ -53,4 +53,4 @@ select
     wind30_longest_radius_nm,
     wind30_shortest_radius_nm,
     is_landfall
-from {{ ref('raw_jma_typhoon_tracks') }}
+from {{ ref('stg_jma_typhoon_tracks') }}

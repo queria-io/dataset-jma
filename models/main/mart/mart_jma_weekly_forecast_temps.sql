@@ -17,4 +17,4 @@ select
     try_cast(nullif(normal_temp_max, '') as double) as normal_temp_max_c,
     try_cast(nullif(normal_precip_lower, '') as double) as normal_precip_lower_mm,
     try_cast(nullif(normal_precip_upper, '') as double) as normal_precip_upper_mm
-from {{ ref('raw_jma_weekly_forecast_temps') }}
+from {{ ref('stg_jma_weekly_forecast_temps') }}

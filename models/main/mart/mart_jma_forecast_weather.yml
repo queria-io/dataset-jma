@@ -2,11 +2,6 @@ version: 2
 
 models:
   - name: mart_jma_forecast_weather
-    description: >-
-      気象庁の府県予報区ごとの短期天気予報（今日・明日・明後日）。一次細分区域
-      （class10）別の天気・風・波を対象日時ごとに収録する。area_codeでmart_jma_areas
-      （level=class10）と結合できる。ビルド時点の最新発表（report_datetime）の1
-      スナップショットで、月次ビルドごとに更新される。波は内陸の区域ではNULL。
     access: public
     config:
       contract:

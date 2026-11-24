@@ -13,4 +13,4 @@ select
     pressure_local_hpa,
     pressure_sea_hpa,
     snow_depth_cm
-from {{ ref('raw_jma_hourly_observations') }}
+from {{ ref('stg_jma_hourly_observations') }}

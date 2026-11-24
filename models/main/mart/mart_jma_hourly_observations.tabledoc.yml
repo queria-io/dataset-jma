@@ -1,0 +1,56 @@
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
+title: 気象庁 時別観測値（気象官署）
+description: |-
+  気象官署の時別観測値です。観測所 × 日 × 時ごとに気温・降水量・湿度・風・日照時間・気圧・積雪を持ちます。
+
+  - 各都道府県の主要な地点の直近数日分だけです
+  - 時は日本標準時の 1〜24 で、24 は翌日の 0 時です
+topics:
+  - 気象
+  - 観測値
+  - 時別
+  - 気温
+  - 降水量
+  - 風
+  - 気圧
+  - 気象官署
+  - 気象庁
+sources:
+  - etrn
+columns:
+  - name: block_no
+    title: 観測所番号
+    description: 気象官署のブロック番号（5桁）。mart_jma_observation_stationsと結合できる
+  - name: observed_date
+    title: 観測日
+    description: 観測日（日本標準時）
+  - name: hour
+    title: 時
+    description: 毎正時の時刻（日本標準時、1〜24）。24は24時（翌日0時）を表す
+  - name: temp_c
+    title: 気温
+    description: 摂氏（℃）
+  - name: precipitation_mm
+    title: 降水量
+    description: 1時間の降水量（mm）。現象のない時・欠測はNULL
+  - name: humidity_pct
+    title: 湿度
+    description: 相対湿度（％）
+  - name: wind_speed_ms
+    title: 風速
+    description: 毎正時の風速（m/s）
+  - name: wind_direction
+    title: 風向
+    description: '16方位（例: 西・北北東）。無風時は「静穏」。欠測はNULL'
+  - name: sunshine_hours
+    title: 日照時間
+    description: 1時間あたりの日照時間（時間）
+  - name: pressure_local_hpa
+    title: 現地気圧
+    description: ヘクトパスカル（hPa）
+  - name: pressure_sea_hpa
+    title: 海面気圧
+    description: ヘクトパスカル（hPa）
+  - name: snow_depth_cm
+    title: 積雪の深さ
+    description: センチメートル（cm）。現象のない時・観測なしはNULL

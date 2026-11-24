@@ -10,4 +10,4 @@ select
     weather,
     wind,
     wave
-from {{ ref('raw_jma_forecasts') }}
+from {{ ref('stg_jma_forecasts') }}
