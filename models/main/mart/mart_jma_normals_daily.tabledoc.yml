@@ -1,11 +1,10 @@
-schema: main
-name: mart_jma_normals_daily
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 title: 気象庁 日別平年値（アメダス）
 description: |-
   アメダス観測所の日別平年値（1991〜2020 年の平均）です。観測所 × 月日ごとに気温・日照時間・降水量・積雪の深さを持ちます。
 
   - 2 月は 29 日まで持ちます
-keywords:
+topics:
   - 気象
   - 平年値
   - 気温
@@ -13,8 +12,8 @@ keywords:
   - アメダス
   - 気象庁
 sources:
-  - path: https://www.data.jma.go.jp/stats/data/mdrr/normal/index.html
-fields:
+  - normal
+columns:
   - name: station_id
     title: 観測所ID
     description: アメダス番号（5桁）。mart_jma_stationsと結合できる

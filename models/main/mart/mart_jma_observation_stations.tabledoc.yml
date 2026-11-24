@@ -1,19 +1,18 @@
-schema: main
-name: mart_jma_observation_stations
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 title: 気象庁 観測所（気象官署）
 description: |-
   日別・時別の観測値を観測している気象官署の一覧です。ブロック番号・地点名・緯度経度を持ちます。
 
   - アメダス観測所（mart_jma_stations）とは番号の体系が違います。両者は地点名で対応づけてください
-keywords:
+topics:
   - 気象
   - 観測所
   - 気象官署
   - 気象台
   - 気象庁
 sources:
-  - path: https://www.data.jma.go.jp/stats/etrn/index.php
-fields:
+  - etrn
+columns:
   - name: block_no
     title: 観測所番号
     description: 気象官署のブロック番号（5桁）。mart_jma_daily_observationsと結合できる

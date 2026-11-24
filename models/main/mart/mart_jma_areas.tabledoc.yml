@@ -1,16 +1,14 @@
-schema: main
-name: mart_jma_areas
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 title: 気象庁 地域コード
-description: |-
-  気象庁の予報区の地域コードの階層マスタです。地方・府県予報区・一次細分区域・市町村等のコード・階層・名称・所管気象台・親コードを持ちます。
-keywords:
+description: 気象庁の予報区の地域コードの階層マスタです。地方・府県予報区・一次細分区域・市町村等のコード・階層・名称・所管気象台・親コードを持ちます。
+topics:
   - 気象
   - 地域コード
   - 予報区
   - 気象庁
 sources:
-  - path: https://www.jma.go.jp/bosai/common/const/area.json
-fields:
+  - area
+columns:
   - name: area_code
     title: 地域コード
   - name: level

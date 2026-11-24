@@ -1,16 +1,14 @@
-schema: main
-name: mart_jma_stations
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 title: 気象庁 観測所一覧（アメダス）
-description: |-
-  アメダス観測所の一覧です。観測所 ID・名称・緯度経度・標高・観測所種別・観測要素を持ちます。
-keywords:
+description: アメダス観測所の一覧です。観測所 ID・名称・緯度経度・標高・観測所種別・観測要素を持ちます。
+topics:
   - 気象
   - 観測所
   - アメダス
   - 気象庁
 sources:
-  - path: https://www.jma.go.jp/bosai/amedas/
-fields:
+  - amedas
+columns:
   - name: station_id
     title: 観測所ID
     description: アメダス番号（5桁）

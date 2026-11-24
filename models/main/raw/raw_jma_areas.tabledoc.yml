@@ -1,8 +1,7 @@
-schema: main
-name: raw_jma_areas
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: 気象庁の地域コード（area.json）の生データ
-annotations: { queria: { published: false } }
-fields:
+hidden: true
+columns:
   - name: area_code
     description: 地域コード
   - name: level

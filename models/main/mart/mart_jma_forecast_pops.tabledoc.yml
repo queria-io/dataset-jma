@@ -1,19 +1,18 @@
-schema: main
-name: mart_jma_forecast_pops
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 title: 気象庁 降水確率（短期予報）
 description: |-
   府県予報区ごとの短期予報の降水確率です。一次細分区域ごと・6 時間ごとの値を持ちます。
 
   - ビルド時点の最新の発表だけを持ち、ビルドごとに置き換わります
-keywords:
+topics:
   - 気象
   - 天気予報
   - 降水確率
   - 予報区
   - 気象庁
 sources:
-  - path: https://www.jma.go.jp/bosai/forecast/
-fields:
+  - forecast
+columns:
   - name: office_code
     title: 府県予報区コード
     description: 発表元の府県予報区のコード。mart_jma_areas の level=office と結合できる

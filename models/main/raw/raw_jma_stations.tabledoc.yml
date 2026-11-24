@@ -1,8 +1,7 @@
-schema: main
-name: raw_jma_stations
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: 気象庁アメダス観測所一覧（amedastable.json）の生データ
-annotations: { queria: { published: false } }
-fields:
+hidden: true
+columns:
   - name: station_id
     description: 観測所ID（アメダス番号、5桁）
   - name: name

@@ -1,12 +1,11 @@
-schema: main
-name: mart_jma_sakura_phenology
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 title: 気象庁 さくらの開花日・満開日（生物季節観測）
 description: |-
   さくらの開花日と満開日（生物季節観測）です。1953 年以降の地点 × 年の観測日と、平年値からの差を持ちます。
 
   - 標本木の種類は地点と年によって違います（species）
   - 観測値の無い年は行がありません
-keywords:
+topics:
   - さくら
   - 桜
   - 開花日
@@ -15,8 +14,8 @@ keywords:
   - 気候変動
   - 気象庁
 sources:
-  - path: https://www.data.jma.go.jp/sakura/data/index.html
-fields:
+  - data
+columns:
   - name: station_name
     title: 地点名
     description: 観測した気象官署の地点名

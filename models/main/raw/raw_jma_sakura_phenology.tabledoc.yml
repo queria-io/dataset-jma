@@ -1,8 +1,7 @@
-schema: main
-name: raw_jma_sakura_phenology
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: 気象庁 生物季節観測のさくらの開花日・満開日（累年表）の生データ
-annotations: { queria: { published: false } }
-fields:
+hidden: true
+columns:
   - name: phenomenon
     description: 現象（開花 / 満開）
   - name: station_name

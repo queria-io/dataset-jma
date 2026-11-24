@@ -2,7 +2,6 @@ version: 2
 
 models:
   - name: mart_jma_typhoon_tracks
-    description: 気象庁が事後解析でまとめた台風の経路（ベストトラック）。1951年以降に発生した台風について、6時間ごとの中心位置・中心気圧・最大風速・暴風域と強風域の半径、日本への上陸・通過の有無を収録する。
     access: public
     config:
       contract:

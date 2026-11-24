@@ -1,8 +1,7 @@
-schema: main
-name: raw_jma_weekly_forecasts
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 description: 府県予報区ごとの週間天気予報（forecast JSONの2要素目を週間予報の区域×日に展開したもの）の生データ
-annotations: { queria: { published: false } }
-fields:
+hidden: true
+columns:
   - name: office_code
     description: 府県予報区コード（area.jsonのoffices）
   - name: report_datetime

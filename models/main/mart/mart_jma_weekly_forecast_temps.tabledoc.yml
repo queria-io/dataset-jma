@@ -1,12 +1,11 @@
-schema: main
-name: mart_jma_weekly_forecast_temps
+$schema: https://tabledoc.queria.io/schemas/table/v1.json
 title: 気象庁 週間予報の予想気温
 description: |-
   週間予報の地点別の予想最低気温・最高気温と予測範囲（7 日分）です。平年値と 7 日間合計降水量の平年並の範囲も持ちます。
 
   - 初日の予想気温と予測範囲は NULL です
   - ビルド時点の最新の発表だけを持ち、ビルドごとに置き換わります
-keywords:
+topics:
   - 気象
   - 天気予報
   - 週間天気予報
@@ -16,8 +15,8 @@ keywords:
   - 平年値
   - 気象庁
 sources:
-  - path: https://www.jma.go.jp/bosai/forecast/
-fields:
+  - forecast
+columns:
   - name: office_code
     title: 府県予報区コード
     description: 発表元の府県予報区のコード。mart_jma_areas の level=office と結合できる
