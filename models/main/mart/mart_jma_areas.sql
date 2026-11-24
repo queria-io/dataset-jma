@@ -8,4 +8,4 @@ select
     name_kana,
     office_name,
     parent_code
-from {{ ref('raw_jma_areas') }}
+from {{ ref('stg_jma_areas') }}

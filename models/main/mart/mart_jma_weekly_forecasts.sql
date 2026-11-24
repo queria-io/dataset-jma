@@ -10,4 +10,4 @@ select
     weather_code,
     try_cast(nullif(pop, '') as integer) as pop_pct,
     nullif(reliability, '') as reliability
-from {{ ref('raw_jma_weekly_forecasts') }}
+from {{ ref('stg_jma_weekly_forecasts') }}

@@ -40,4 +40,4 @@ select
     end as max_intensity,
     station_count,
     hypocenter_flag
-from {{ ref('raw_jma_hypocenters') }}
+from {{ ref('stg_jma_hypocenters') }}

@@ -11,4 +11,4 @@ select
     station_type,
     is_office,
     elems
-from {{ ref('raw_jma_stations') }}
+from {{ ref('stg_jma_stations') }}

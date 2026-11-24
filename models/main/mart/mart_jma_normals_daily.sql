@@ -10,4 +10,4 @@ select
     sunshine_hours,
     precipitation_mm,
     snow_depth_cm
-from {{ ref('raw_jma_normals_daily') }}
+from {{ ref('stg_jma_normals_daily') }}
